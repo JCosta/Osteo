@@ -9,8 +9,8 @@
     "voucherNumber": "JT-139009",
     "issueDate": "03/08/2026",
     "issueDateIso": "2026-08-03",
-    "status": "pendente",
-    "usedDate": null,
+    "status": "utilizado",
+    "usedDate": "03/08/2026",
     "createdAt": "2026-08-03T09:48:35.769Z"
   }
 ]

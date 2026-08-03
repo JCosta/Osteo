@@ -598,6 +598,7 @@ function base64ToUtf8(b64){
 async function readRegistry(token, clinicId){
   const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(clinicId)}?ref=${GH_BRANCH}`;
   const res = await fetch(apiUrl, {
+    cache: 'no-store',
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
   });
   if(res.status === 404) return { data: [], sha: null };
@@ -687,6 +688,7 @@ document.getElementById('btn-publish').addEventListener('click', async ()=>{
     // verifica se já existe um ficheiro com este nome (para atualizar em vez de duplicar)
     let existingSha = null;
     const checkRes = await fetch(apiUrl, {
+      cache: 'no-store',
       headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
     });
     if(checkRes.status === 200){

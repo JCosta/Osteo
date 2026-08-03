@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão de Vouchers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF5EA; --paper:#FFFDF8; --sage:#5C7A5E; --sage-dk:#33452F;
+    --apricot:#E2985F; --sky:#B9CDCB; --red:#C0604A;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--cream); font-family:'Inter',sans-serif; color:var(--sage-dk);
+    min-height:100vh; padding-bottom:3rem;
+  }
+  header{ padding:2rem 1.5rem 1rem; text-align:center; }
+  header h1{ font-family:'Fraunces',serif; color:var(--sage); font-weight:600; font-size:1.6rem; margin:0; }
+  header p{ font-size:.85rem; opacity:.7; margin:.4rem 0 0; }
+
+  .wrap{ max-width:1100px; margin:0 auto; padding:0 1.5rem; }
+
+  .cards{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:1.5rem 0 2rem;
+  }
+  @media(max-width:640px){ .cards{ grid-template-columns:1fr; } }
+  .card{
+    background:var(--paper); border-radius:16px; padding:1.4rem;
+    box-shadow:0 14px 30px -22px rgba(51,69,47,.35); text-align:center;
+  }
+  .card .num{ font-family:'Fraunces',serif; font-size:2.2rem; color:var(--sage); font-weight:600; }
+  .card .lbl{ font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; opacity:.7; margin-top:.3rem; }
+  .card.pendente .num{ color:var(--apricot); }
+  .card.utilizado .num{ color:var(--sage); }
+
+  .toolbar{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
+    margin-bottom:1rem;
+  }
+  .tabs{ display:flex; gap:.5rem; }
+  .tab{
+    padding:.5rem 1rem; border-radius:999px; border:1px solid var(--sky); background:var(--paper);
+    font-size:.8rem; cursor:pointer; color:var(--sage-dk);
+  }
+  .tab.active{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+
+  .token-row{ display:flex; gap:.5rem; align-items:center; font-size:.78rem; }
+  .token-row input{
+    padding:.5rem .7rem; border:1px solid var(--sky); border-radius:8px; background:var(--paper);
+    font-size:.8rem; width:180px;
+  }
+  .token-row label{ display:flex; align-items:center; gap:.3rem; white-space:nowrap; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--paper); border-radius:14px; overflow:hidden; }
+  thead th{
+    text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.08em;
+    padding:.8rem .9rem; background:var(--sage); color:var(--cream);
+  }
+  tbody td{ padding:.8rem .9rem; font-size:.85rem; border-top:1px solid var(--cream); vertical-align:middle; }
+  tbody tr:hover{ background:rgba(185,205,203,.15); }
+
+  .pill{
+    display:inline-block; padding:.25rem .7rem; border-radius:999px; font-size:.7rem; font-weight:500;
+  }
+  .pill.pendente{ background:rgba(226,152,95,.18); color:#a85f2c; }
+  .pill.utilizado{ background:rgba(92,122,94,.18); color:var(--sage-dk); }
+
+  .row-actions{ display:flex; gap:.4rem; }
+  .row-actions a, .row-actions button{
+    font-size:.72rem; padding:.35rem .7rem; border-radius:999px; border:none; cursor:pointer;
+    text-decoration:none; white-space:nowrap;
+  }
+  .row-actions a{ background:var(--sky); color:var(--sage-dk); }
+  .row-actions button{ background:var(--sage); color:var(--cream); }
+  .row-actions button:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .empty, .loading, .error{
+    text-align:center; padding:3rem 1rem; color:var(--sage-dk); opacity:.7; font-size:.9rem;
+  }
+  .error{ color:var(--red); opacity:1; }
+
+  .table-wrap{ overflow-x:auto; border-radius:14px; box-shadow:0 14px 30px -22px rgba(51,69,47,.35); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Gestão de Vouchers</h1>
+  <p>Visão geral de tudo o que foi emitido, utilizado e está pendente.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="cards">
+    <div class="card"><div class="num" id="c-total">—</div><div class="lbl">Emitidos</div></div>
+    <div class="card pendente"><div class="num" id="c-pendente">—</div><div class="lbl">Pendentes</div></div>
+    <div class="card utilizado"><div class="num" id="c-utilizado">—</div><div class="lbl">Utilizados</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="tab active" data-filter="todos">Todos</button>
+      <button class="tab" data-filter="pendente">Pendentes</button>
+      <button class="tab" data-filter="utilizado">Utilizados</button>
+    </div>
+    <div class="token-row">
+      <input type="password" id="gh-token" placeholder="Token GitHub (só para marcar utilizado)">
+      <label><input type="checkbox" id="gh-remember" checked> Guardar</label>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="loading">A carregar registo...</div>
+  </div>
+
+</div>
+
+<script>
+const GH_OWNER = 'JCosta';
+const GH_REPO = 'Osteo';
+const GH_BRANCH = 'main';
+const REGISTRY_PATH = 'Vouchers/data/registry.json';
+const TOKEN_STORAGE_KEY = 'voucherGenerator_ghToken'; // mesma chave usada no gerador
+
+let allEntries = [];
+let currentFilter = 'todos';
+
+function utf8ToBase64(str){
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+
+async function loadRegistry(){
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading">A carregar registo...</div>';
+  try{
+    // leitura pública, sem token — raw.githubusercontent.com serve o ficheiro diretamente
+    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${REGISTRY_PATH}?t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if(res.status === 404){
+      allEntries = [];
+    } else if(!res.ok){
+      throw new Error(`HTTP ${res.status}`);
+    } else {
+      allEntries = await res.json();
+    }
+    render();
+  } catch(err){
+    content.innerHTML = `<div class="error">Não consegui carregar o registo (${err.message}). Confirma se já existe algum vale publicado.</div>`;
+    console.error(err);
+  }
+}
+
+function render(){
+  const total = allEntries.length;
+  const usados = allEntries.filter(e => e.status === 'utilizado').length;
+  const pendentes = total - usados;
+
+  document.getElementById('c-total').textContent = total;
+  document.getElementById('c-pendente').textContent = pendentes;
+  document.getElementById('c-utilizado').textContent = usados;
+
+  const content = document.getElementById('content');
+  const filtered = currentFilter === 'todos'
+    ? allEntries
+    : allEntries.filter(e => e.status === currentFilter);
+
+  if(filtered.length === 0){
+    content.innerHTML = '<div class="empty">Nenhum vale para mostrar.</div>';
+    return;
+  }
+
+  const sorted = [...filtered].sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
+
+  const rows = sorted.map(e => `
+    <tr data-filename="${e.filename}">
+      <td>${escapeHtml(e.to || '—')}</td>
+      <td>${escapeHtml(e.from || '—')}</td>
+      <td>${escapeHtml(e.service || '—')}</td>
+      <td>${escapeHtml(e.clinic || '—')}</td>
+      <td>${escapeHtml(e.voucherNumber || '—')}</td>
+      <td>${escapeHtml(e.issueDate || '—')}</td>
+      <td><span class="pill ${e.status}">${e.status === 'utilizado' ? 'Utilizado' : 'Pendente'}</span></td>
+      <td>${escapeHtml(e.usedDate || '—')}</td>
+      <td>
+        <div class="row-actions">
+          <a href="${e.url}" target="_blank" rel="noopener">Ver vale</a>
+          ${e.status !== 'utilizado' ? `<button class="btn-mark-used" data-filename="${e.filename}">Marcar utilizado</button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  content.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Para</th><th>De</th><th>Serviço</th><th>Clínica</th><th>Nº vale</th>
+            <th>Emitido em</th><th>Estado</th><th>Utilizado em</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+
+  content.querySelectorAll('.btn-mark-used').forEach(btn=>{
+    btn.addEventListener('click', ()=> markAsUsed(btn.dataset.filename, btn));
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+async function markAsUsed(filename, btnEl){
+  const token = document.getElementById('gh-token').value.trim();
+  if(!token){
+    alert('Cola o teu token de acesso do GitHub no campo acima para poderes marcar vales como utilizados.');
+    return;
+  }
+  const remember = document.getElementById('gh-remember').checked;
+  if(remember) localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  else localStorage.removeItem(TOKEN_STORAGE_KEY);
+
+  btnEl.disabled = true;
+  btnEl.textContent = 'A gravar...';
+
+  try{
+    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${REGISTRY_PATH}`;
+    const getRes = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if(!getRes.ok) throw new Error(`Não consegui ler o registo (HTTP ${getRes.status}).`);
+    const file = await getRes.json();
+    const binary = atob(file.content.replace(/\n/g,''));
+    const bytes = new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+    const entries = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+
+    const idx = entries.findIndex(e => e.filename === filename);
+    if(idx === -1) throw new Error('Vale não encontrado no registo (pode ter sido atualizado entretanto).');
+
+    const todayDisplay = new Date().toLocaleDateString('pt-PT');
+    entries[idx].status = 'utilizado';
+    entries[idx].usedDate = todayDisplay;
+
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `Marca vale como utilizado: ${filename}`,
+        content: utf8ToBase64(JSON.stringify(entries, null, 2)),
+        branch: GH_BRANCH,
+        sha: file.sha
+      })
+    });
+    if(!putRes.ok){
+      const errBody = await putRes.json().catch(()=>({}));
+      throw new Error(errBody.message || `HTTP ${putRes.status}`);
+    }
+
+    allEntries = entries;
+    render();
+  } catch(err){
+    alert('Não foi possível marcar como utilizado: ' + err.message);
+    btnEl.disabled = false;
+    btnEl.textContent = 'Marcar utilizado';
+  }
+}
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.filter;
+    render();
+  });
+});
+
+const savedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+if(savedToken) document.getElementById('gh-token').value = savedToken;
+
+loadRegistry();
+</script>
+</body>
+</html>

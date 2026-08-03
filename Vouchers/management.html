@@ -937,18 +937,31 @@ async function loadConfig(){
 
 function renderConfigLists(){
   renderConfigList('services', appConfig.services, (item) =>
-    `<div class="config-item-info"><b>${escapeHtml(item.label)}</b><div class="sub">${escapeHtml(item.title)} · ${escapeHtml(item.duration || '')}</div></div>`
+    `<div class="config-item-info"><b>${escapeHtml(item.label)}</b><div class="sub">${escapeHtml(item.professionalTitle || '')} · ${escapeHtml(item.duration || '')}</div></div>`
   );
   renderConfigList('clinics', appConfig.clinics, (item) =>
-    `<div class="config-item-info"><b>${escapeHtml(item.name)}</b><div class="sub">${escapeHtml(item.address || '')}</div></div>`
+    `<div class="config-item-info" style="display:flex; align-items:center; gap:.8rem;">
+       <img src="${item.logo || FALLBACK_LOGO_THUMB}" alt="" style="width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--sky);">
+       <span><b>${escapeHtml(item.name)}</b><div class="sub">${escapeHtml(item.address || '')}${item.logo ? '' : ' · sem logótipo próprio (usa o da Joana)'}</div></span>
+     </div>`
   );
-  renderConfigList('therapists', appConfig.therapists, (item) =>
-    `<div class="config-item-info"><b>${escapeHtml(item.name)}</b></div>`
-  );
+  renderConfigList('therapists', appConfig.therapists, (item) => {
+    const clinicNames = (item.clinics || [])
+      .map(id => appConfig.clinics.find(c => c.id === id))
+      .filter(Boolean).map(c => c.name).join(', ') || 'sem clínica atribuída';
+    const specialtyNames = (item.specialties || [])
+      .map(id => appConfig.services.find(s => s.id === id))
+      .filter(Boolean).map(s => s.label).join(', ') || 'sem especialidade atribuída';
+    return `<div class="config-item-info"><b>${escapeHtml(item.name)}</b><div class="sub">${escapeHtml(clinicNames)}<br>${escapeHtml(specialtyNames)}</div></div>`;
+  });
   renderConfigList('validityOptions', appConfig.validityOptions, (item) =>
     `<div class="config-item-info">${escapeHtml(item)}</div>`, true
   );
 }
+
+const FALLBACK_LOGO_THUMB = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#B9CDCB"/></svg>`
+);
 
 function renderConfigList(entity, items, renderInfo, isPlainStrings){
   const container = document.getElementById('list-' + entity);
@@ -959,6 +972,9 @@ function renderConfigList(entity, items, renderInfo, isPlainStrings){
   container.innerHTML = items.map((item, idx) => {
     const inactive = !isPlainStrings && item.active === false;
     let actions = `<button class="btn-edit" data-entity="${entity}" data-idx="${idx}">Editar</button>`;
+    if(entity === 'clinics'){
+      actions += `<button class="btn-logo" data-entity="${entity}" data-idx="${idx}">Logótipo</button>`;
+    }
     if(!isPlainStrings){
       actions += `<button class="btn-toggle" data-entity="${entity}" data-idx="${idx}">${inactive ? 'Ativar' : 'Desativar'}</button>`;
     }
@@ -969,6 +985,9 @@ function renderConfigList(entity, items, renderInfo, isPlainStrings){
   container.querySelectorAll('.btn-edit').forEach(btn=>{
     btn.addEventListener('click', ()=> editConfigItem(btn.dataset.entity, parseInt(btn.dataset.idx)));
   });
+  container.querySelectorAll('.btn-logo').forEach(btn=>{
+    btn.addEventListener('click', ()=> uploadClinicLogo(parseInt(btn.dataset.idx)));
+  });
   container.querySelectorAll('.btn-toggle').forEach(btn=>{
     btn.addEventListener('click', ()=> toggleConfigItem(btn.dataset.entity, parseInt(btn.dataset.idx)));
   });
@@ -977,10 +996,32 @@ function renderConfigList(entity, items, renderInfo, isPlainStrings){
   });
 }
 
+function uploadClinicLogo(idx){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/png,image/jpeg,image/webp,image/svg+xml';
+  input.addEventListener('change', ()=>{
+    const file = input.files[0];
+    if(!file) return;
+    if(file.size > 1.5 * 1024 * 1024){
+      alert('Imagem grande demais — usa um ficheiro até 1,5 MB (idealmente um PNG quadrado com fundo transparente).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      appConfig.clinics[idx].logo = reader.result; // já vem como data:...;base64,...
+      saveConfigAndRender();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.click();
+}
+
 const ENTITY_FIELDS = {
   services: [
     { key:'label', q:'Nome curto (aparece no dropdown do gerador):' },
     { key:'title', q:'Título completo (aparece no vale):' },
+    { key:'professionalTitle', q:'Como se chama o profissional deste serviço? (ex: "Osteopata", "Podologista", "Fisioterapeuta"):' },
     { key:'description', q:'Descrição (texto do vale):' },
     { key:'duration', q:'Duração (ex: "45 minutos"):' },
     { key:'recommendedAge', q:'Recomendado para (ex: "0–12 anos" ou "Adultos"):' }
@@ -991,11 +1032,9 @@ const ENTITY_FIELDS = {
     { key:'mapEmbedUrl', q:'Link do mapa (Google Maps, "output=embed"):' },
     { key:'directionsUrl', q:'Link "Como chegar":' },
     { key:'bookingUrl', q:'Link/WhatsApp de marcação (deixa vazio se não houver):' }
-  ],
-  therapists: [
-    { key:'name', q:'Nome da terapeuta:' }
   ]
 };
+
 
 function slugifyId(str){
   return String(str).toLowerCase()
@@ -1014,11 +1053,74 @@ function promptFields(fields, existing){
   return result;
 }
 
+/* Pede uma lista de nomes separados por vírgula e resolve cada um para o
+   id correspondente numa lista de itens (clínicas ou serviços), comparando
+   por nome/label sem distinguir maiúsculas/acentos. Itens não encontrados
+   são ignorados (avisa no fim). */
+function promptPickFromList(question, items, nameKey, existingIds){
+  const normalize = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const byNorm = {};
+  items.forEach(it => { byNorm[normalize(it[nameKey])] = it.id; });
+
+  const currentNames = (existingIds || [])
+    .map(id => items.find(it => it.id === id))
+    .filter(Boolean)
+    .map(it => it[nameKey])
+    .join(', ');
+
+  const optionsLine = 'Opções disponíveis: ' + items.map(it => it[nameKey]).join(', ');
+  const input = window.prompt(`${question}\n${optionsLine}\n(separa por vírgula)`, currentNames);
+  if(input === null) return null; // cancelado
+
+  const wanted = input.split(',').map(s => s.trim()).filter(Boolean);
+  const ids = [];
+  const notFound = [];
+  wanted.forEach(name => {
+    const id = byNorm[normalize(name)];
+    if(id){ if(!ids.includes(id)) ids.push(id); }
+    else notFound.push(name);
+  });
+  if(notFound.length){
+    alert('Não reconheci: ' + notFound.join(', ') + '\n(Confirma o nome exato, tal como está configurado.)');
+  }
+  return ids;
+}
+
+function promptTherapist(existing){
+  const name = window.prompt('Nome do profissional:', existing ? existing.name : '');
+  if(name === null || !name.trim()) return null;
+
+  const clinicIds = promptPickFromList(
+    'Em que clínicas trabalha?', appConfig.clinics, 'name', existing ? existing.clinics : []
+  );
+  if(clinicIds === null) return null;
+
+  const specialtyIds = promptPickFromList(
+    'Que tipos de consulta faz (especialidades)?', appConfig.services, 'label', existing ? existing.specialties : []
+  );
+  if(specialtyIds === null) return null;
+
+  return {
+    name: name.trim(),
+    clinics: clinicIds,
+    specialties: specialtyIds
+  };
+}
+
 function addConfigItem(entity){
   if(entity === 'validityOptions'){
     const value = window.prompt('Novo texto de validade (ex: "3 meses após emissão"):', '');
     if(value === null || !value.trim()) return;
     appConfig.validityOptions.push(value.trim());
+    saveConfigAndRender();
+    return;
+  }
+  if(entity === 'therapists'){
+    const data = promptTherapist(null);
+    if(!data) return;
+    data.id = slugifyId(data.name);
+    data.active = true;
+    appConfig.therapists.push(data);
     saveConfigAndRender();
     return;
   }
@@ -1040,6 +1142,16 @@ function editConfigItem(entity, idx){
     saveConfigAndRender();
     return;
   }
+  if(entity === 'therapists'){
+    const existing = appConfig.therapists[idx];
+    const data = promptTherapist(existing);
+    if(!data) return;
+    data.id = existing.id;
+    data.active = existing.active;
+    appConfig.therapists[idx] = data;
+    saveConfigAndRender();
+    return;
+  }
   const fields = ENTITY_FIELDS[entity];
   const existing = appConfig[entity][idx];
   const data = promptFields(fields, existing);
@@ -1049,6 +1161,7 @@ function editConfigItem(entity, idx){
   appConfig[entity][idx] = data;
   saveConfigAndRender();
 }
+
 
 function toggleConfigItem(entity, idx){
   appConfig[entity][idx].active = appConfig[entity][idx].active === false ? true : false;

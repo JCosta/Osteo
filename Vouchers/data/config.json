@@ -19,6 +19,16 @@
       "recommendedAge": "Adultos",
       "active": true,
       "professionalTitle": "Osteopata"
+    },
+    {
+      "label": "Fisio Pelvica",
+      "title": "Fisio Pélvica",
+      "professionalTitle": "Fisioterapeuta",
+      "description": "a mulher precisa de cuidado! Cuide de si, sempre!",
+      "duration": "45 minutos",
+      "recommendedAge": "Adultos",
+      "id": "fisio-pelvica",
+      "active": true
     }
   ],
   "clinics": [

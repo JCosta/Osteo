@@ -329,7 +329,7 @@
 
     <div class="details">
       <div class="item"><div class="k">Duração</div><div class="v" id="d-duration"></div></div>
-      <div class="item"><div class="k">Terapeuta</div><div class="v" id="d-therapist"></div></div>
+      <div class="item"><div class="k" id="d-therapist-label">Terapeuta</div><div class="v" id="d-therapist"></div></div>
       <div class="item"><div class="k">Recomendado para</div><div class="v" id="d-age"></div></div>
       <div class="item"><div class="k">Válido até</div><div class="v" id="d-validity"></div></div>
       <div class="item item-wide"><div class="k">Emitido em</div><div class="v" id="d-issued"></div></div>
@@ -384,6 +384,7 @@ const CONFIG = {
 
   duration: "45 minutos",
   therapistName: "Joana Teixeira",
+  professionalTitle: "Terapeuta",
   recommendedAge: "0–12 anos",
   validityText: "3 meses após emissão",
 
@@ -447,6 +448,7 @@ document.getElementById('v-title').textContent = CONFIG.title;
 document.getElementById('v-desc').textContent = CONFIG.description;
 document.getElementById('d-duration').textContent = CONFIG.duration;
 document.getElementById('d-therapist').textContent = CONFIG.therapistName;
+document.getElementById('d-therapist-label').textContent = CONFIG.professionalTitle || 'Terapeuta';
 document.getElementById('d-age').textContent = CONFIG.recommendedAge;
 document.getElementById('d-validity').textContent = CONFIG.validityText;
 document.getElementById('d-issued').textContent = CONFIG.issueDate;
@@ -454,7 +456,7 @@ document.getElementById('v-to').textContent = CONFIG.toName;
 document.getElementById('v-from').textContent = CONFIG.fromName;
 document.getElementById('s-logo').src = CONFIG.logoSrc;
 document.getElementById('s-clinic').textContent = CONFIG.clinicName;
-document.getElementById('s-practitioner').textContent = CONFIG.therapistName + " · Osteopata";
+document.getElementById('s-practitioner').textContent = CONFIG.therapistName + " · " + (CONFIG.professionalTitle || 'Terapeuta');
 document.getElementById('s-address').textContent = CONFIG.clinicAddress;
 document.getElementById('s-map').src = CONFIG.mapEmbedUrl;
 if(CONFIG.bookingUrl){

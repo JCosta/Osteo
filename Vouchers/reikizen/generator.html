@@ -519,18 +519,19 @@ document.getElementById('adv-toggle').addEventListener('click', (e)=>{
 });
 
 document.getElementById('btn-download').addEventListener('click', async ()=>{
-  const data = currentData();
   const status = document.getElementById('status');
   const btn = document.getElementById('btn-download');
-
-  if(!data.to){ status.textContent = 'Preenche pelo menos o campo "Para".'; return; }
-  if(!data.therapist){ status.textContent = 'Não há nenhum profissional disponível para esta clínica + tipo de consulta. Verifica em Gestão > Terapeutas.'; return; }
-  if(!data.dateIso){ status.textContent = 'Escolhe a data de emissão.'; return; }
-
   btn.disabled = true;
   status.textContent = 'A preparar o ficheiro...';
 
   try{
+    const data = currentData();
+    if(!data.clinic || !data.clinic.id){ throw new Error('Não há nenhuma clínica selecionada/configurada.'); }
+    if(!data.service || !data.service.id){ throw new Error('Não há nenhum tipo de consulta selecionado/configurado.'); }
+    if(!data.to){ throw new Error('Preenche pelo menos o campo "Para".'); }
+    if(!data.therapist){ throw new Error('Não há nenhum profissional disponível para esta clínica + tipo de consulta. Verifica em Gestão > Terapeutas.'); }
+    if(!data.dateIso){ throw new Error('Escolhe a data de emissão.'); }
+
     const html = buildVoucherHTML(data);
     const staticHtml = await bakeStaticVoucher(html);
 
@@ -543,9 +544,9 @@ document.getElementById('btn-download').addEventListener('click', async ()=>{
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    status.textContent = `Transferido como "${filename}". Já funciona sem JavaScript (ex: preview do WhatsApp). Move-o para a pasta do repositório e faz commit.`;
+    status.textContent = `Transferido como "${filename}". Este ficheiro fica só no teu computador — usa "Publicar e obter link" para o colocar automaticamente no GitHub.`;
   } catch(err){
-    status.textContent = 'Não foi possível gerar o ficheiro. Tenta novamente.';
+    status.textContent = err.message || 'Não foi possível gerar o ficheiro. Tenta novamente.';
     console.error(err);
   } finally {
     btn.disabled = false;
@@ -650,31 +651,33 @@ if(savedToken){
 }
 
 document.getElementById('btn-publish').addEventListener('click', async ()=>{
-  const data = currentData();
   const ghStatus = document.getElementById('gh-status');
   const btn = document.getElementById('btn-publish');
-  const token = document.getElementById('gh-token').value.trim();
-  const remember = document.getElementById('gh-remember').checked;
   const linkOut = document.getElementById('link-out');
   linkOut.style.display = 'none';
-
-  if(!data.to){ ghStatus.textContent = 'Preenche pelo menos o campo "Para".'; return; }
-  if(!data.therapist){ ghStatus.textContent = 'Não há nenhum profissional disponível para esta clínica + tipo de consulta. Verifica em Gestão > Terapeutas.'; return; }
-  if(!data.dateIso){ ghStatus.textContent = 'Escolhe a data de emissão.'; return; }
-  if(!token){ ghStatus.textContent = 'Cola o teu token de acesso do GitHub.'; return; }
-
-  if(remember){ localStorage.setItem(TOKEN_STORAGE_KEY, token); }
-  else { localStorage.removeItem(TOKEN_STORAGE_KEY); }
-
-  const filename = buildFilename(data);
-  const clinicFolder = getClinicFolder(data.clinic.id);
-  const path = `${clinicFolder}/${filename}`;
-  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
-
   btn.disabled = true;
   ghStatus.textContent = 'A preparar o ficheiro...';
 
   try{
+    const data = currentData();
+    const token = document.getElementById('gh-token').value.trim();
+    const remember = document.getElementById('gh-remember').checked;
+
+    if(!data.clinic || !data.clinic.id){ throw new Error('Não há nenhuma clínica selecionada/configurada. Verifica em Gestão > Configurações > Clínicas.'); }
+    if(!data.service || !data.service.id){ throw new Error('Não há nenhum tipo de consulta selecionado/configurado. Verifica em Gestão > Configurações > Tipos de Consulta.'); }
+    if(!data.to){ throw new Error('Preenche pelo menos o campo "Para".'); }
+    if(!data.therapist){ throw new Error('Não há nenhum profissional disponível para esta clínica + tipo de consulta. Verifica em Gestão > Terapeutas.'); }
+    if(!data.dateIso){ throw new Error('Escolhe a data de emissão.'); }
+    if(!token){ throw new Error('Cola o teu token de acesso do GitHub.'); }
+
+    if(remember){ localStorage.setItem(TOKEN_STORAGE_KEY, token); }
+    else { localStorage.removeItem(TOKEN_STORAGE_KEY); }
+
+    const filename = buildFilename(data);
+    const clinicFolder = getClinicFolder(data.clinic.id);
+    const path = `${clinicFolder}/${filename}`;
+    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
+
     const html = buildVoucherHTML(data);
     const staticHtml = await bakeStaticVoucher(html);
     const contentB64 = utf8ToBase64(staticHtml);

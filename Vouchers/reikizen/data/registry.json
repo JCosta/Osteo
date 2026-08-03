@@ -40,5 +40,26 @@
     "calendarLink": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Consulta%20de%20Osteopatia%20Pedi%C3%A1trica&dates=20261130T170000/20261130T174500&details=Vale%20n%C2%BA%20JT-821148%20%E2%80%94%20Consulta%20de%20Osteopatia%20Pedi%C3%A1trica&location=Escola%20Reikizen&ctz=Europe/Lisbon",
     "usedDate": "03/08/2026",
     "createdAt": "2026-08-03T22:28:23.194Z"
+  },
+  {
+    "filename": "DUARTE_SOUSA_2026-08-03.html",
+    "url": "https://osteo.bistrobit.fyi/Vouchers/reikizen/generated/DUARTE_SOUSA_2026-08-03.html",
+    "to": "DUARTE SOUSA",
+    "from": "JOANA TEIXEIRA",
+    "service": "Consulta de Osteopatia Pediátrica",
+    "duration": "45 minutos",
+    "validityText": "6 meses após emissão",
+    "notes": "",
+    "clinic": "Escola Reikizen",
+    "voucherNumber": "JT-939003",
+    "issueDate": "03/08/2026",
+    "issueDateIso": "2026-08-03",
+    "status": "pendente",
+    "appointmentDateIso": null,
+    "appointmentTime": null,
+    "patientPhone": null,
+    "calendarLink": null,
+    "usedDate": null,
+    "createdAt": "2026-08-03T22:32:40.330Z"
   }
 ]

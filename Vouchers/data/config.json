@@ -1,0 +1,104 @@
+{
+  "services": [
+    {
+      "id": "pediatric",
+      "label": "Osteopatia Pediátrica",
+      "title": "Consulta de Osteopatia Pediátrica",
+      "description": "Um momento de escuta e cuidado só para o teu pequeno tesouro. Mãos calmas, atenção total, e todo o carinho que um bebé merece.",
+      "duration": "45 minutos",
+      "recommendedAge": "0–12 anos",
+      "active": true,
+      "professionalTitle": "Osteopata"
+    },
+    {
+      "id": "adult",
+      "label": "Osteopatia para Adultos",
+      "title": "Consulta de Osteopatia para Adultos",
+      "description": "Um momento só para ti — para aliviar tensões, recuperar mobilidade e devolver equilíbrio ao corpo. Cuidado profissional, com toda a atenção que mereces.",
+      "duration": "50 minutos",
+      "recommendedAge": "Adultos",
+      "active": true,
+      "professionalTitle": "Osteopata"
+    }
+  ],
+  "clinics": [
+    {
+      "id": "reikizen",
+      "name": "Escola Reikizen",
+      "address": "R. Amália Rodrigues, 4715-213 Braga",
+      "mapEmbedUrl": "https://www.google.com/maps?q=Escola+Reikizen+Braga&output=embed",
+      "directionsUrl": "https://maps.app.goo.gl/24U3AdtvhUe2Kj1T9",
+      "bookingUrl": "https://wa.me/351964222510",
+      "active": true,
+      "logo": ""
+    },
+    {
+      "id": "casulo",
+      "name": "Casulo by Vanessa Pinheiro - Centro Materno-infantil e Pilates Clínico",
+      "address": "Av. Dr. António Ribeiro Guimarães 835 R/C, 4730-715 Vila Verde",
+      "mapEmbedUrl": "https://www.google.com/maps?q=Casulo+by+Vanessa+Pinheiro+Vila+Verde&output=embed",
+      "directionsUrl": "https://www.google.com/maps/search/?api=1&query=Casulo+by+Vanessa+Pinheiro+Av.+Dr.+Ant%C3%B3nio+Ribeiro+Guimar%C3%A3es+835+Vila+Verde",
+      "bookingUrl": "https://wa.me/351928104022",
+      "active": false,
+      "logo": ""
+    },
+    {
+      "id": "clibrito",
+      "name": "Clibrito - Clínica Médica e Dentária",
+      "address": "Rua das Escolas Primárias, Bloco 3 R/C Direito, Guimarães 4580-020",
+      "mapEmbedUrl": "https://www.google.com/maps?q=Clibrito+Cl%C3%ADnica+M%C3%A9dica+e+Dent%C3%A1ria+Guimar%C3%A3es&output=embed",
+      "directionsUrl": "https://www.google.com/maps/search/?api=1&query=Clibrito+Cl%C3%ADnica+M%C3%A9dica+e+Dent%C3%A1ria+Guimar%C3%A3es",
+      "bookingUrl": "https://wa.me/351253725210",
+      "active": false,
+      "logo": ""
+    },
+    {
+      "id": "clipharma",
+      "name": "Clipharma - Espaço De Saúde",
+      "address": "Av. dos Bombeiros Voluntários, 4830-550 Póvoa de Lanhoso",
+      "mapEmbedUrl": "https://www.google.com/maps?q=Clipharma+Espa%C3%A7o+De+Saude+P%C3%B3voa+de+Lanhoso&output=embed",
+      "directionsUrl": "https://www.google.com/maps/search/?api=1&query=Clipharma+Espa%C3%A7o+De+Saude+P%C3%B3voa+de+Lanhoso",
+      "bookingUrl": "",
+      "active": false,
+      "logo": ""
+    },
+    {
+      "id": "marclinic",
+      "name": "Mar Clinic",
+      "address": "Av. da Praia, Largo Senhora da Guia n° 7 Apúlia, 4740-035 Esposende",
+      "mapEmbedUrl": "https://www.google.com/maps?q=Mar+Clinic+Ap%C3%BAlia+Esposende&output=embed",
+      "directionsUrl": "https://www.google.com/maps/search/?api=1&query=Mar+Clinic+Ap%C3%BAlia+Esposende",
+      "bookingUrl": "https://wa.me/351913811441",
+      "active": false,
+      "logo": ""
+    },
+    {
+      "id": "saluslive",
+      "name": "SalusLive - Centro Pediátrico",
+      "address": "R. dos Limoeiros 4, 4700-710 Braga",
+      "mapEmbedUrl": "https://www.google.com/maps?q=SalusLive+Centro+Pedi%C3%A1trico+Braga&output=embed",
+      "directionsUrl": "https://www.google.com/maps/search/?api=1&query=SalusLive+Centro+Pedi%C3%A1trico+Braga",
+      "bookingUrl": "https://wa.me/351253099420",
+      "active": false,
+      "logo": ""
+    }
+  ],
+  "therapists": [
+    {
+      "id": "joana-teixeira",
+      "name": "Joana Teixeira",
+      "active": true,
+      "clinics": [
+        "reikizen"
+      ],
+      "specialties": [
+        "pediatric",
+        "adult"
+      ]
+    }
+  ],
+  "validityOptions": [
+    "3 meses após emissão",
+    "6 meses após emissão"
+  ]
+}

@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "filename": "TESTE_2026-08-03.html",
+    "url": "https://osteo.bistrobit.fyi/Vouchers/reikizen/generated/TESTE_2026-08-03.html",
+    "to": "TESTE",
+    "from": "OLA",
+    "service": "Consulta de Osteopatia para Adultos",
+    "duration": "50 minutos",
+    "validityText": "3 meses após emissão",
+    "notes": "",
+    "clinic": "Escola Reikizen",
+    "voucherNumber": "JT-531597",
+    "issueDate": "03/08/2026",
+    "issueDateIso": "2026-08-03",
+    "status": "pendente",
+    "appointmentDateIso": null,
+    "appointmentTime": null,
+    "patientPhone": null,
+    "calendarLink": null,
+    "usedDate": null,
+    "createdAt": "2026-08-03T22:27:19.882Z"
+  }
+]

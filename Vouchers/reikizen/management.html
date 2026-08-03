@@ -635,6 +635,7 @@ function getToken(){
 async function readRegistryEntries(token){
   const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(currentClinicId)}`;
   const res = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
+    cache: 'no-store',
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
   });
   if(!res.ok) throw new Error(`Não consegui ler o registo (HTTP ${res.status}).`);
@@ -1081,8 +1082,9 @@ function uploadClinicLogo(idx){
     }
     const reader = new FileReader();
     reader.onload = ()=>{
+      const snapshot = JSON.parse(JSON.stringify(appConfig));
       appConfig.clinics[idx].logo = reader.result; // já vem como data:...;base64,...
-      saveConfigAndRender();
+      saveConfigAndRender(snapshot);
     };
     reader.readAsDataURL(file);
   });
@@ -1229,6 +1231,7 @@ function saveEntityModal(){
     return;
   }
 
+  const snapshot = JSON.parse(JSON.stringify(appConfig));
   if(idx != null){
     const existing = appConfig[entity][idx];
     data.id = existing.id;
@@ -1241,7 +1244,7 @@ function saveEntityModal(){
   }
 
   closeEntityModal();
-  saveConfigAndRender();
+  saveConfigAndRender(snapshot);
 }
 
 document.getElementById('entity-modal-cancel').addEventListener('click', closeEntityModal);
@@ -1254,8 +1257,9 @@ function addConfigItem(entity){
   if(entity === 'validityOptions'){
     const value = window.prompt('Novo texto de validade (ex: "3 meses após emissão"):', '');
     if(value === null || !value.trim()) return;
+    const snapshot = JSON.parse(JSON.stringify(appConfig));
     appConfig.validityOptions.push(value.trim());
-    saveConfigAndRender();
+    saveConfigAndRender(snapshot);
     return;
   }
   openEntityModal(entity, null);
@@ -1266,8 +1270,9 @@ function editConfigItem(entity, idx){
     const current = appConfig.validityOptions[idx];
     const value = window.prompt('Editar texto de validade:', current);
     if(value === null || !value.trim()) return;
+    const snapshot = JSON.parse(JSON.stringify(appConfig));
     appConfig.validityOptions[idx] = value.trim();
-    saveConfigAndRender();
+    saveConfigAndRender(snapshot);
     return;
   }
   openEntityModal(entity, idx);
@@ -1275,18 +1280,20 @@ function editConfigItem(entity, idx){
 
 
 function toggleConfigItem(entity, idx){
+  const snapshot = JSON.parse(JSON.stringify(appConfig));
   appConfig[entity][idx].active = appConfig[entity][idx].active === false ? true : false;
-  saveConfigAndRender();
+  saveConfigAndRender(snapshot);
 }
 
 function removeConfigItem(entity, idx){
   const label = entity === 'validityOptions' ? appConfig[entity][idx] : (appConfig[entity][idx].name || appConfig[entity][idx].label);
   if(!confirm(`Remover "${label}"? Esta ação não pode ser desfeita.`)) return;
+  const snapshot = JSON.parse(JSON.stringify(appConfig));
   appConfig[entity].splice(idx, 1);
-  saveConfigAndRender();
+  saveConfigAndRender(snapshot);
 }
 
-async function saveConfigAndRender(){
+async function saveConfigAndRender(previousConfig){
   renderConfigLists(); // otimista: mostra já a alteração
   if(typeof renderClinicContext === 'function' && document.getElementById('clinic-context')){
     renderClinicContext();
@@ -1294,12 +1301,14 @@ async function saveConfigAndRender(){
   const token = getCfgToken();
   if(!token){
     alert('A alteração não foi gravada — cola o token do GitHub e tenta novamente.');
+    if(previousConfig){ appConfig = previousConfig; renderConfigLists(); if(typeof renderClinicContext === 'function') renderClinicContext(); }
     return;
   }
   try{
     const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_PATH}`;
     let sha = null;
     const getRes = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
+      cache: 'no-store',
       headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
     });
     if(getRes.status === 200){
@@ -1328,7 +1337,14 @@ async function saveConfigAndRender(){
       throw new Error(errBody.message || `HTTP ${putRes.status}`);
     }
   } catch(err){
-    alert('Não foi possível gravar a configuração: ' + err.message);
+    alert('Não foi possível gravar a configuração — a alteração foi desfeita. Tenta novamente. (' + err.message + ')');
+    if(previousConfig){
+      appConfig = previousConfig;
+      renderConfigLists();
+      if(typeof renderClinicContext === 'function' && document.getElementById('clinic-context')){
+        renderClinicContext();
+      }
+    }
   }
 }
 

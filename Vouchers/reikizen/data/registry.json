@@ -61,5 +61,26 @@
     "calendarLink": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Consulta%20de%20Osteopatia%20Pedi%C3%A1trica&dates=20261030T150000/20261030T154500&details=Vale%20n%C2%BA%20JT-939003%20%E2%80%94%20Consulta%20de%20Osteopatia%20Pedi%C3%A1trica&location=Escola%20Reikizen&ctz=Europe/Lisbon",
     "usedDate": null,
     "createdAt": "2026-08-03T22:32:40.330Z"
+  },
+  {
+    "filename": "DAVID_CARVALHO_2026-08-15.html",
+    "url": "https://osteo.bistrobit.fyi/Vouchers/reikizen/generated/DAVID_CARVALHO_2026-08-15.html",
+    "to": "DAVID CARVALHO",
+    "from": "RAQUEL CARVALHO",
+    "service": "Consulta de Osteopatia para Adultos",
+    "duration": "50 minutos",
+    "validityText": "6 meses após emissão",
+    "notes": "",
+    "clinic": "Escola Reikizen",
+    "voucherNumber": "JT-581352",
+    "issueDate": "15/08/2026",
+    "issueDateIso": "2026-08-15",
+    "status": "pendente",
+    "appointmentDateIso": null,
+    "appointmentTime": null,
+    "patientPhone": null,
+    "calendarLink": null,
+    "usedDate": null,
+    "createdAt": "2026-08-03T22:52:12.028Z"
   }
 ]

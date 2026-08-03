@@ -19,5 +19,26 @@
     "calendarLink": null,
     "usedDate": null,
     "createdAt": "2026-08-03T22:27:19.882Z"
+  },
+  {
+    "filename": "eu_tambem_2026-08-03.html",
+    "url": "https://osteo.bistrobit.fyi/Vouchers/reikizen/generated/eu_tambem_2026-08-03.html",
+    "to": "eu tambem",
+    "from": "querias",
+    "service": "Consulta de Osteopatia Pediátrica",
+    "duration": "45 minutos",
+    "validityText": "3 meses após emissão",
+    "notes": "",
+    "clinic": "Escola Reikizen",
+    "voucherNumber": "JT-821148",
+    "issueDate": "03/08/2026",
+    "issueDateIso": "2026-08-03",
+    "status": "pendente",
+    "appointmentDateIso": null,
+    "appointmentTime": null,
+    "patientPhone": null,
+    "calendarLink": null,
+    "usedDate": null,
+    "createdAt": "2026-08-03T22:28:23.194Z"
   }
 ]

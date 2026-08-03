@@ -32,9 +32,10 @@
   .wrap{ max-width:1100px; margin:0 auto; padding:0 1.5rem; }
 
   .cards{
-    display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:1.5rem 0 2rem;
+    display:grid; grid-template-columns:repeat(5,1fr); gap:1rem; margin:1.5rem 0 2rem;
   }
-  @media(max-width:760px){ .cards{ grid-template-columns:1fr 1fr; } }
+  @media(max-width:900px){ .cards{ grid-template-columns:1fr 1fr 1fr; } }
+  @media(max-width:560px){ .cards{ grid-template-columns:1fr 1fr; } }
   .card{
     background:var(--paper); border-radius:16px; padding:1.4rem;
     box-shadow:0 14px 30px -22px rgba(51,69,47,.35); text-align:center;
@@ -44,17 +45,24 @@
   .card.pendente .num{ color:var(--apricot); }
   .card.agendado .num{ color:#5C7FA6; }
   .card.utilizado .num{ color:var(--sage); }
+  .card.cancelado .num{ color:var(--red); }
 
   .toolbar{
     display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
     margin-bottom:1rem;
   }
-  .tabs{ display:flex; gap:.5rem; }
+  .tabs{ display:flex; gap:.5rem; flex-wrap:wrap; }
   .tab{
     padding:.5rem 1rem; border-radius:999px; border:1px solid var(--sky); background:var(--paper);
     font-size:.8rem; cursor:pointer; color:var(--sage-dk);
   }
   .tab.active{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+
+  .search-row{ display:flex; gap:.5rem; align-items:center; margin-bottom:1rem; }
+  .search-row input{
+    flex:1; max-width:320px; padding:.6rem .9rem; border:1px solid var(--sky); border-radius:999px;
+    background:var(--paper); font-size:.85rem; color:var(--sage-dk);
+  }
 
   .token-row{ display:flex; gap:.5rem; align-items:center; font-size:.78rem; }
   .token-row input{
@@ -70,6 +78,7 @@
   }
   tbody td{ padding:.8rem .9rem; font-size:.85rem; border-top:1px solid var(--cream); vertical-align:middle; }
   tbody tr:hover{ background:rgba(185,205,203,.15); }
+  tbody tr.expiring{ background:rgba(192,96,74,.07); }
 
   .pill{
     display:inline-block; padding:.25rem .7rem; border-radius:999px; font-size:.7rem; font-weight:500;
@@ -77,6 +86,13 @@
   .pill.pendente{ background:rgba(226,152,95,.18); color:#a85f2c; }
   .pill.agendado{ background:rgba(92,127,166,.18); color:#3d5c80; }
   .pill.utilizado{ background:rgba(92,122,94,.18); color:var(--sage-dk); }
+  .pill.cancelado{ background:rgba(192,96,74,.15); color:var(--red); text-decoration:line-through; }
+
+  .validity-warn{ color:var(--red); font-weight:600; }
+  .validity-ok{ opacity:.75; }
+
+  .notes-preview{ font-size:.78rem; opacity:.75; max-width:140px; display:block;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .row-actions{ display:flex; gap:.4rem; flex-wrap:wrap; }
   .row-actions a, .row-actions button{
@@ -87,12 +103,32 @@
   .row-actions button{ background:var(--sage); color:var(--cream); }
   .row-actions button.btn-schedule{ background:#5C7FA6; }
   .row-actions button.btn-whatsapp{ background:#3fae56; }
+  .row-actions button.btn-reminder{ background:#8a9e5c; }
+  .row-actions button.btn-copy{ background:var(--sky); color:var(--sage-dk); }
+  .row-actions button.btn-cancel-voucher{ background:transparent; border:1px solid var(--red) !important; color:var(--red); }
+  .row-actions button.btn-notes{ background:transparent; border:1px solid var(--sky) !important; color:var(--sage-dk); }
   .row-actions button:disabled{ opacity:.5; cursor:not-allowed; }
 
   .empty, .loading, .error{
     text-align:center; padding:3rem 1rem; color:var(--sage-dk); opacity:.7; font-size:.9rem;
   }
   .error{ color:var(--red); opacity:1; }
+
+  .stats-toggle{
+    display:inline-block; margin-bottom:1rem; font-size:.8rem; color:var(--sage);
+    cursor:pointer; text-decoration:underline; background:none; border:none; padding:0;
+  }
+  .stats-panel{ display:none; margin-bottom:1.5rem; gap:1rem; grid-template-columns:1fr 1fr; }
+  .stats-panel.open{ display:grid; }
+  @media(max-width:640px){ .stats-panel.open{ grid-template-columns:1fr; } }
+  .stats-box{
+    background:var(--paper); border-radius:14px; padding:1.2rem 1.4rem;
+    box-shadow:0 14px 30px -22px rgba(51,69,47,.35);
+  }
+  .stats-box h4{ font-family:'Fraunces',serif; color:var(--sage); font-size:1rem; margin:0 0 .7rem; }
+  .stats-box table{ box-shadow:none; }
+  .stats-box th, .stats-box td{ font-size:.78rem; padding:.4rem .5rem; }
+  .stats-box thead th{ background:transparent; color:var(--sage-dk); border-bottom:1px solid var(--sky); }
 
   .table-wrap{ overflow-x:auto; border-radius:14px; box-shadow:0 14px 30px -22px rgba(51,69,47,.35); }
 
@@ -121,7 +157,44 @@
   .modal .btn-cancel{ background:var(--cream); color:var(--sage-dk); border:1px solid var(--sky) !important; }
   .modal .btn-confirm{ background:var(--sage); color:var(--cream); }
   .modal .btn-confirm:disabled{ opacity:.5; cursor:not-allowed; }
-  .modal .modal-error{ font-size:.78rem; color:var(--red); margin-top:.6rem; min-height:1em; }
+  .modal .modal-error{ font-size:.78rem; color:var(--red); margin-top:.6rem; min-height:1em; }  .view-tabs{
+    display:flex; justify-content:center; gap:.6rem; margin-bottom:.5rem;
+  }
+  .view-tab{
+    padding:.55rem 1.3rem; border-radius:999px; border:1px solid var(--sky); background:var(--paper);
+    font-size:.85rem; cursor:pointer; color:var(--sage-dk); font-family:'Fraunces',serif;
+  }
+  .view-tab.active{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+
+  .config-token-row{ display:flex; gap:.6rem; align-items:center; margin:1.5rem 0; }
+  .config-token-row input{
+    flex:1; max-width:340px; padding:.6rem .9rem; border:1px solid var(--sky); border-radius:8px;
+    background:var(--paper); font-size:.85rem;
+  }
+
+  .config-section{ margin-bottom:2rem; }
+  .config-section-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:.8rem; }
+  .config-section-head h3{ font-family:'Fraunces',serif; color:var(--sage); font-size:1.1rem; margin:0; }
+  .btn-add{
+    background:var(--sage); color:var(--cream); border:none; padding:.5rem 1rem;
+    border-radius:999px; font-size:.8rem; cursor:pointer;
+  }
+  .config-list{ display:flex; flex-direction:column; gap:.6rem; }
+  .config-item{
+    background:var(--paper); border-radius:12px; padding:.9rem 1.1rem;
+    display:flex; justify-content:space-between; align-items:center; gap:1rem;
+    box-shadow:0 10px 24px -20px rgba(51,69,47,.35);
+  }
+  .config-item.inactive{ opacity:.55; }
+  .config-item-info{ font-size:.88rem; color:var(--sage-dk); }
+  .config-item-info .sub{ font-size:.76rem; opacity:.7; margin-top:.15rem; }
+  .config-item-actions{ display:flex; gap:.4rem; flex-shrink:0; }
+  .config-item-actions button{
+    font-size:.72rem; padding:.35rem .7rem; border-radius:999px; border:none; cursor:pointer;
+    background:var(--sky); color:var(--sage-dk); white-space:nowrap;
+  }
+  .config-item-actions button.danger{ background:transparent; border:1px solid var(--red); color:var(--red); }
+  .config-empty{ font-size:.85rem; opacity:.6; padding:.5rem; }
 </style>
 </head>
 <body>
@@ -132,13 +205,37 @@
   <p>Visão geral de tudo o que foi emitido, utilizado e está pendente.</p>
 </header>
 
-<div class="wrap">
+<div class="view-tabs">
+  <button class="view-tab active" id="tab-vales">Vales</button>
+  <button class="view-tab" id="tab-config">Configurações</button>
+</div>
+
+<div class="wrap" id="vales-view">
 
   <div class="cards">
     <div class="card"><div class="num" id="c-total">—</div><div class="lbl">Emitidos</div></div>
     <div class="card pendente"><div class="num" id="c-pendente">—</div><div class="lbl">Pendentes</div></div>
     <div class="card agendado"><div class="num" id="c-agendado">—</div><div class="lbl">Agendados</div></div>
     <div class="card utilizado"><div class="num" id="c-utilizado">—</div><div class="lbl">Utilizados</div></div>
+    <div class="card cancelado"><div class="num" id="c-cancelado">—</div><div class="lbl">Cancelados</div></div>
+  </div>
+
+  <button class="stats-toggle" id="stats-toggle">+ Ver estatísticas por clínica/serviço</button>
+  <div class="stats-panel" id="stats-panel">
+    <div class="stats-box">
+      <h4>Por clínica</h4>
+      <table><thead><tr><th>Clínica</th><th>Emitidos</th><th>Utilizados</th></tr></thead>
+        <tbody id="stats-clinic"></tbody></table>
+    </div>
+    <div class="stats-box">
+      <h4>Por serviço</h4>
+      <table><thead><tr><th>Serviço</th><th>Emitidos</th><th>Utilizados</th></tr></thead>
+        <tbody id="stats-service"></tbody></table>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <input type="search" id="search-input" placeholder="Pesquisar por nome ou nº de vale...">
   </div>
 
   <div class="toolbar">
@@ -147,6 +244,7 @@
       <button class="tab" data-filter="pendente">Pendentes</button>
       <button class="tab" data-filter="agendado">Agendados</button>
       <button class="tab" data-filter="utilizado">Utilizados</button>
+      <button class="tab" data-filter="cancelado">Cancelados</button>
     </div>
     <div class="token-row">
       <input type="password" id="gh-token" placeholder="Token GitHub (só para gravar alterações)">
@@ -160,9 +258,48 @@
 
 </div>
 
+<div class="wrap" id="config-view" style="display:none;">
+  <div class="config-token-row">
+    <input type="password" id="cfg-gh-token" placeholder="Token GitHub (necessário para gravar alterações)">
+    <label><input type="checkbox" id="cfg-gh-remember" checked> Guardar</label>
+  </div>
+
+  <div class="config-section">
+    <div class="config-section-head">
+      <h3>Tipos de Consulta</h3>
+      <button class="btn-add" data-entity="services">+ Adicionar</button>
+    </div>
+    <div id="list-services" class="config-list"></div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-section-head">
+      <h3>Clínicas</h3>
+      <button class="btn-add" data-entity="clinics">+ Adicionar</button>
+    </div>
+    <div id="list-clinics" class="config-list"></div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-section-head">
+      <h3>Terapeutas</h3>
+      <button class="btn-add" data-entity="therapists">+ Adicionar</button>
+    </div>
+    <div id="list-therapists" class="config-list"></div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-section-head">
+      <h3>Textos de Validade</h3>
+      <button class="btn-add" data-entity="validityOptions">+ Adicionar</button>
+    </div>
+    <div id="list-validityOptions" class="config-list"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="schedule-modal">
   <div class="modal">
-    <h3>Agendar consulta</h3>
+    <h3 id="modal-title">Agendar consulta</h3>
     <div class="modal-sub" id="modal-sub">—</div>
 
     <label for="m-date">Data da consulta</label>
@@ -188,6 +325,7 @@ const GH_OWNER = 'JCosta';
 const GH_REPO = 'Osteo';
 const GH_BRANCH = 'main';
 const REGISTRY_PATH = 'Vouchers/data/registry.json';
+const CONFIG_PATH = 'Vouchers/data/config.json';
 const TOKEN_STORAGE_KEY = 'voucherGenerator_ghToken'; // mesma chave usada no gerador
 
 let allEntries = [];
@@ -221,21 +359,49 @@ async function loadRegistry(){
   }
 }
 
+let searchTerm = '';
+
+function parseValidityMonths(validityText){
+  const m = String(validityText || '').match(/(\d+)\s*m[eê]s/i);
+  return m ? parseInt(m[1], 10) : 3; // por defeito 3 meses, se não conseguir ler
+}
+
+function computeExpiry(entry){
+  if(!entry.issueDateIso) return null;
+  const months = parseValidityMonths(entry.validityText);
+  const d = new Date(entry.issueDateIso + 'T00:00:00');
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
 function render(){
   const total = allEntries.length;
   const usados = allEntries.filter(e => e.status === 'utilizado').length;
   const agendados = allEntries.filter(e => e.status === 'agendado').length;
-  const pendentes = total - usados - agendados;
+  const cancelados = allEntries.filter(e => e.status === 'cancelado').length;
+  const pendentes = total - usados - agendados - cancelados;
 
   document.getElementById('c-total').textContent = total;
   document.getElementById('c-pendente').textContent = pendentes;
   document.getElementById('c-agendado').textContent = agendados;
   document.getElementById('c-utilizado').textContent = usados;
+  document.getElementById('c-cancelado').textContent = cancelados;
+
+  renderStats();
 
   const content = document.getElementById('content');
-  const filtered = currentFilter === 'todos'
+  let filtered = currentFilter === 'todos'
     ? allEntries
     : allEntries.filter(e => e.status === currentFilter);
+
+  if(searchTerm){
+    const q = searchTerm.toLowerCase();
+    filtered = filtered.filter(e =>
+      (e.to || '').toLowerCase().includes(q) ||
+      (e.from || '').toLowerCase().includes(q) ||
+      (e.voucherNumber || '').toLowerCase().includes(q)
+    );
+  }
 
   if(filtered.length === 0){
     content.innerHTML = '<div class="empty">Nenhum vale para mostrar.</div>';
@@ -243,24 +409,54 @@ function render(){
   }
 
   const sorted = [...filtered].sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
-  const statusLabel = { pendente: 'Pendente', agendado: 'Agendado', utilizado: 'Utilizado' };
+  const statusLabel = { pendente: 'Pendente', agendado: 'Agendado', utilizado: 'Utilizado', cancelado: 'Cancelado' };
+
+  const now = new Date();
 
   const rows = sorted.map(e => {
-    const agendaInfo = e.status !== 'pendente' && e.appointmentDateIso
+    const agendaInfo = (e.status === 'agendado' || e.status === 'utilizado') && e.appointmentDateIso
       ? `${formatDateDisplay(e.appointmentDateIso)} ${e.appointmentTime || ''}`.trim()
       : '—';
+
+    // aviso de validade — só interessa enquanto o vale ainda não foi usado/cancelado
+    let validityCell = '—';
+    let expiringClass = '';
+    if(e.status === 'pendente' || e.status === 'agendado'){
+      const expiry = computeExpiry(e);
+      if(expiry){
+        const daysLeft = Math.ceil((expiry - now) / 86400000);
+        const expiryDisplay = expiry.toLocaleDateString('pt-PT');
+        if(daysLeft < 0){
+          validityCell = `<span class="validity-warn">Expirado (${expiryDisplay})</span>`;
+          expiringClass = 'expiring';
+        } else if(daysLeft <= 30){
+          validityCell = `<span class="validity-warn">${expiryDisplay} (${daysLeft}d)</span>`;
+          expiringClass = 'expiring';
+        } else {
+          validityCell = `<span class="validity-ok">${expiryDisplay}</span>`;
+        }
+      }
+    }
 
     let actions = `<a href="${e.url}" target="_blank" rel="noopener">Ver vale</a>`;
     if(e.status === 'pendente'){
       actions += `<button class="btn-schedule" data-filename="${e.filename}">Agendar</button>`;
+      actions += `<button class="btn-cancel-voucher" data-filename="${e.filename}">Cancelar</button>`;
     }
     if(e.status === 'agendado'){
       actions += `<button class="btn-whatsapp" data-filename="${e.filename}">Enviar WhatsApp</button>`;
+      actions += `<button class="btn-copy" data-filename="${e.filename}">Copiar mensagem</button>`;
+      actions += `<button class="btn-reminder" data-filename="${e.filename}">Enviar lembrete</button>`;
+      actions += `<button class="btn-schedule" data-filename="${e.filename}">Reagendar</button>`;
       actions += `<button class="btn-mark-used" data-filename="${e.filename}">Marcar utilizado</button>`;
+      actions += `<button class="btn-cancel-voucher" data-filename="${e.filename}">Cancelar</button>`;
     }
+    actions += `<button class="btn-notes" data-filename="${e.filename}">Notas</button>`;
+
+    const notesPreview = e.notes ? escapeHtml(e.notes) : '<span style="opacity:.4">—</span>';
 
     return `
-    <tr data-filename="${e.filename}">
+    <tr data-filename="${e.filename}" class="${expiringClass}">
       <td>${escapeHtml(e.to || '—')}</td>
       <td>${escapeHtml(e.from || '—')}</td>
       <td>${escapeHtml(e.service || '—')}</td>
@@ -268,7 +464,8 @@ function render(){
       <td>${escapeHtml(e.voucherNumber || '—')}</td>
       <td><span class="pill ${e.status}">${statusLabel[e.status] || e.status}</span></td>
       <td>${escapeHtml(agendaInfo)}</td>
-      <td>${escapeHtml(e.usedDate || '—')}</td>
+      <td>${validityCell}</td>
+      <td><span class="notes-preview" title="${e.notes ? escapeHtml(e.notes) : ''}">${notesPreview}</span></td>
       <td><div class="row-actions">${actions}</div></td>
     </tr>
   `;
@@ -280,7 +477,7 @@ function render(){
         <thead>
           <tr>
             <th>Para</th><th>De</th><th>Serviço</th><th>Clínica</th><th>Nº vale</th>
-            <th>Estado</th><th>Consulta</th><th>Utilizado em</th><th>Ações</th>
+            <th>Estado</th><th>Consulta</th><th>Validade</th><th>Notas</th><th>Ações</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -297,6 +494,41 @@ function render(){
   content.querySelectorAll('.btn-whatsapp').forEach(btn=>{
     btn.addEventListener('click', ()=> sendWhatsApp(btn.dataset.filename));
   });
+  content.querySelectorAll('.btn-copy').forEach(btn=>{
+    btn.addEventListener('click', ()=> copyMessage(btn.dataset.filename, btn));
+  });
+  content.querySelectorAll('.btn-reminder').forEach(btn=>{
+    btn.addEventListener('click', ()=> sendReminder(btn.dataset.filename));
+  });
+  content.querySelectorAll('.btn-cancel-voucher').forEach(btn=>{
+    btn.addEventListener('click', ()=> cancelVoucher(btn.dataset.filename, btn));
+  });
+  content.querySelectorAll('.btn-notes').forEach(btn=>{
+    btn.addEventListener('click', ()=> editNotes(btn.dataset.filename));
+  });
+}
+
+function renderStats(){
+  const byClinic = {};
+  const byService = {};
+  allEntries.forEach(e=>{
+    const c = e.clinic || '—';
+    const s = e.service || '—';
+    byClinic[c] = byClinic[c] || { total:0, usados:0 };
+    byClinic[c].total++;
+    if(e.status === 'utilizado') byClinic[c].usados++;
+    byService[s] = byService[s] || { total:0, usados:0 };
+    byService[s].total++;
+    if(e.status === 'utilizado') byService[s].usados++;
+  });
+
+  const rowsFrom = (obj) => Object.entries(obj)
+    .sort((a,b)=> b[1].total - a[1].total)
+    .map(([k,v]) => `<tr><td>${escapeHtml(k)}</td><td>${v.total}</td><td>${v.usados}</td></tr>`)
+    .join('') || '<tr><td colspan="3" style="opacity:.5">Sem dados</td></tr>';
+
+  document.getElementById('stats-clinic').innerHTML = rowsFrom(byClinic);
+  document.getElementById('stats-service').innerHTML = rowsFrom(byService);
 }
 
 function formatDateDisplay(iso){
@@ -392,12 +624,15 @@ function openScheduleModal(filename){
   if(!entry) return;
   scheduleTargetFilename = filename;
 
+  const isReschedule = entry.status === 'agendado';
+  document.getElementById('modal-title').textContent = isReschedule ? 'Reagendar consulta' : 'Agendar consulta';
   document.getElementById('modal-sub').textContent =
     `${entry.to || 'Paciente'} · Vale ${entry.voucherNumber || ''} · ${entry.service || ''}`;
-  document.getElementById('m-date').value = '';
-  document.getElementById('m-time').value = '10:00';
-  document.getElementById('m-phone').value = '';
+  document.getElementById('m-date').value = entry.appointmentDateIso || '';
+  document.getElementById('m-time').value = entry.appointmentTime || '10:00';
+  document.getElementById('m-phone').value = entry.patientPhone || '';
   document.getElementById('modal-error').textContent = '';
+  document.getElementById('modal-confirm').textContent = isReschedule ? 'Confirmar novo horário' : 'Confirmar agendamento';
   document.getElementById('schedule-modal').classList.add('open');
 }
 
@@ -532,6 +767,89 @@ function sendWhatsApp(filename){
   window.open(`https://wa.me/${entry.patientPhone}?text=${message}`, '_blank');
 }
 
+function buildReminderMessage(entry){
+  const isPediatric = /pediátric/i.test(entry.service || '');
+  const who = isPediatric ? (entry.to || 'o(a) vosso(a) filho(a)') : (entry.to || '');
+  const lines = [
+    `Olá! 🌿 Só a lembrar: a consulta de ${who} é já ${formatDateDisplay(entry.appointmentDateIso)} às ${entry.appointmentTime || ''}, em ${entry.clinic || ''}.`,
+    '',
+    isPediatric
+      ? 'Se a criança não estiver bem (febre, mal-estar), pedimos que remarquem.'
+      : 'Se não puderes comparecer, pedimos aviso com 48h de antecedência.',
+    '',
+    'Até já! 💛'
+  ];
+  return lines.join('\n');
+}
+
+function sendReminder(filename){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry || !entry.patientPhone){
+    alert('Este vale ainda não tem número de telemóvel guardado.');
+    return;
+  }
+  const message = encodeURIComponent(buildReminderMessage(entry));
+  window.open(`https://wa.me/${entry.patientPhone}?text=${message}`, '_blank');
+}
+
+async function copyMessage(filename, btnEl){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry) return;
+  const message = buildWhatsAppMessage(entry);
+  try{
+    await navigator.clipboard.writeText(message);
+    const original = btnEl.textContent;
+    btnEl.textContent = 'Copiado!';
+    setTimeout(()=> btnEl.textContent = original, 1500);
+  } catch(e){
+    // fallback: mostra a mensagem para copiar à mão
+    window.prompt('Copia a mensagem abaixo:', message);
+  }
+}
+
+async function cancelVoucher(filename, btnEl){
+  if(!confirm('Marcar este vale como cancelado? Pode reverter mais tarde diretamente no registo, se for preciso.')) return;
+  const token = getToken();
+  if(!token) return;
+
+  btnEl.disabled = true;
+  try{
+    const { entries, sha } = await readRegistryEntries(token);
+    const idx = entries.findIndex(e => e.filename === filename);
+    if(idx === -1) throw new Error('Vale não encontrado no registo.');
+    entries[idx].status = 'cancelado';
+    entries[idx].cancelledAt = new Date().toISOString();
+    await writeRegistryEntries(token, entries, sha, `Cancela vale: ${filename}`);
+    allEntries = entries;
+    render();
+  } catch(err){
+    alert('Não foi possível cancelar: ' + err.message);
+    btnEl.disabled = false;
+  }
+}
+
+async function editNotes(filename){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry) return;
+  const newNotes = window.prompt('Notas internas para este vale:', entry.notes || '');
+  if(newNotes === null) return; // cancelado
+
+  const token = getToken();
+  if(!token) return;
+
+  try{
+    const { entries, sha } = await readRegistryEntries(token);
+    const idx = entries.findIndex(e => e.filename === filename);
+    if(idx === -1) throw new Error('Vale não encontrado no registo.');
+    entries[idx].notes = newNotes;
+    await writeRegistryEntries(token, entries, sha, `Atualiza notas: ${filename}`);
+    allEntries = entries;
+    render();
+  } catch(err){
+    alert('Não foi possível guardar as notas: ' + err.message);
+  }
+}
+
 document.querySelectorAll('.tab').forEach(tab=>{
   tab.addEventListener('click', ()=>{
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -541,10 +859,258 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 
+let searchDebounce;
+document.getElementById('search-input').addEventListener('input', (e)=>{
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(()=>{
+    searchTerm = e.target.value.trim();
+    render();
+  }, 200);
+});
+
+document.getElementById('stats-toggle').addEventListener('click', ()=>{
+  const panel = document.getElementById('stats-panel');
+  panel.classList.toggle('open');
+  document.getElementById('stats-toggle').textContent =
+    panel.classList.contains('open') ? '- Ver estatísticas por clínica/serviço' : '+ Ver estatísticas por clínica/serviço';
+});
+
 const savedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
 if(savedToken) document.getElementById('gh-token').value = savedToken;
 
 loadRegistry();
+
+/* ================================================================
+   CONFIGURAÇÕES — Tipos de Consulta, Clínicas, Terapeutas, Validade
+   Tudo gravado em Vouchers/data/config.json. Edição por perguntas
+   sequenciais (prompt), simples e sem precisar de formulários novos.
+   ================================================================ */
+const DEFAULT_CONFIG = { services: [], clinics: [], therapists: [], validityOptions: [] };
+let appConfig = null;
+let appConfigSha = null;
+
+document.getElementById('tab-vales').addEventListener('click', ()=> switchView('vales'));
+document.getElementById('tab-config').addEventListener('click', ()=> switchView('config'));
+
+function switchView(view){
+  document.getElementById('vales-view').style.display = view === 'vales' ? '' : 'none';
+  document.getElementById('config-view').style.display = view === 'config' ? '' : 'none';
+  document.getElementById('tab-vales').classList.toggle('active', view === 'vales');
+  document.getElementById('tab-config').classList.toggle('active', view === 'config');
+  if(view === 'config' && !appConfig) loadConfig();
+}
+
+function getCfgToken(){
+  const token = document.getElementById('cfg-gh-token').value.trim();
+  if(!token){
+    alert('Cola o teu token de acesso do GitHub no campo acima primeiro.');
+    return null;
+  }
+  const remember = document.getElementById('cfg-gh-remember').checked;
+  if(remember) localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  else localStorage.removeItem(TOKEN_STORAGE_KEY);
+  return token;
+}
+
+async function loadConfig(){
+  ['services','clinics','therapists','validityOptions'].forEach(k=>{
+    document.getElementById('list-' + k).innerHTML = '<div class="config-empty">A carregar...</div>';
+  });
+  try{
+    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${CONFIG_PATH}?t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if(res.status === 404){
+      appConfig = { ...DEFAULT_CONFIG };
+      appConfigSha = null;
+    } else if(!res.ok){
+      throw new Error(`HTTP ${res.status}`);
+    } else {
+      appConfig = await res.json();
+      appConfigSha = null; // sha só é lido/necessário no momento de gravar (via API, com token)
+    }
+  } catch(err){
+    appConfig = { ...DEFAULT_CONFIG };
+    console.error('Falha ao carregar config.json:', err);
+  }
+  renderConfigLists();
+}
+
+function renderConfigLists(){
+  renderConfigList('services', appConfig.services, (item) =>
+    `<div class="config-item-info"><b>${escapeHtml(item.label)}</b><div class="sub">${escapeHtml(item.title)} · ${escapeHtml(item.duration || '')}</div></div>`
+  );
+  renderConfigList('clinics', appConfig.clinics, (item) =>
+    `<div class="config-item-info"><b>${escapeHtml(item.name)}</b><div class="sub">${escapeHtml(item.address || '')}</div></div>`
+  );
+  renderConfigList('therapists', appConfig.therapists, (item) =>
+    `<div class="config-item-info"><b>${escapeHtml(item.name)}</b></div>`
+  );
+  renderConfigList('validityOptions', appConfig.validityOptions, (item) =>
+    `<div class="config-item-info">${escapeHtml(item)}</div>`, true
+  );
+}
+
+function renderConfigList(entity, items, renderInfo, isPlainStrings){
+  const container = document.getElementById('list-' + entity);
+  if(!items || items.length === 0){
+    container.innerHTML = '<div class="config-empty">Nada configurado ainda.</div>';
+    return;
+  }
+  container.innerHTML = items.map((item, idx) => {
+    const inactive = !isPlainStrings && item.active === false;
+    let actions = `<button class="btn-edit" data-entity="${entity}" data-idx="${idx}">Editar</button>`;
+    if(!isPlainStrings){
+      actions += `<button class="btn-toggle" data-entity="${entity}" data-idx="${idx}">${inactive ? 'Ativar' : 'Desativar'}</button>`;
+    }
+    actions += `<button class="danger btn-remove" data-entity="${entity}" data-idx="${idx}">Remover</button>`;
+    return `<div class="config-item ${inactive ? 'inactive' : ''}">${renderInfo(item)}<div class="config-item-actions">${actions}</div></div>`;
+  }).join('');
+
+  container.querySelectorAll('.btn-edit').forEach(btn=>{
+    btn.addEventListener('click', ()=> editConfigItem(btn.dataset.entity, parseInt(btn.dataset.idx)));
+  });
+  container.querySelectorAll('.btn-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=> toggleConfigItem(btn.dataset.entity, parseInt(btn.dataset.idx)));
+  });
+  container.querySelectorAll('.btn-remove').forEach(btn=>{
+    btn.addEventListener('click', ()=> removeConfigItem(btn.dataset.entity, parseInt(btn.dataset.idx)));
+  });
+}
+
+const ENTITY_FIELDS = {
+  services: [
+    { key:'label', q:'Nome curto (aparece no dropdown do gerador):' },
+    { key:'title', q:'Título completo (aparece no vale):' },
+    { key:'description', q:'Descrição (texto do vale):' },
+    { key:'duration', q:'Duração (ex: "45 minutos"):' },
+    { key:'recommendedAge', q:'Recomendado para (ex: "0–12 anos" ou "Adultos"):' }
+  ],
+  clinics: [
+    { key:'name', q:'Nome da clínica:' },
+    { key:'address', q:'Morada:' },
+    { key:'mapEmbedUrl', q:'Link do mapa (Google Maps, "output=embed"):' },
+    { key:'directionsUrl', q:'Link "Como chegar":' },
+    { key:'bookingUrl', q:'Link/WhatsApp de marcação (deixa vazio se não houver):' }
+  ],
+  therapists: [
+    { key:'name', q:'Nome da terapeuta:' }
+  ]
+};
+
+function slugifyId(str){
+  return String(str).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || ('item-' + Date.now());
+}
+
+function promptFields(fields, existing){
+  const result = existing ? { ...existing } : {};
+  for(const f of fields){
+    const current = result[f.key] || '';
+    const value = window.prompt(f.q, current);
+    if(value === null) return null; // cancelado
+    result[f.key] = value;
+  }
+  return result;
+}
+
+function addConfigItem(entity){
+  if(entity === 'validityOptions'){
+    const value = window.prompt('Novo texto de validade (ex: "3 meses após emissão"):', '');
+    if(value === null || !value.trim()) return;
+    appConfig.validityOptions.push(value.trim());
+    saveConfigAndRender();
+    return;
+  }
+  const fields = ENTITY_FIELDS[entity];
+  const data = promptFields(fields, null);
+  if(!data) return;
+  data.id = slugifyId(data.name || data.label || Date.now());
+  data.active = true;
+  appConfig[entity].push(data);
+  saveConfigAndRender();
+}
+
+function editConfigItem(entity, idx){
+  if(entity === 'validityOptions'){
+    const current = appConfig.validityOptions[idx];
+    const value = window.prompt('Editar texto de validade:', current);
+    if(value === null || !value.trim()) return;
+    appConfig.validityOptions[idx] = value.trim();
+    saveConfigAndRender();
+    return;
+  }
+  const fields = ENTITY_FIELDS[entity];
+  const existing = appConfig[entity][idx];
+  const data = promptFields(fields, existing);
+  if(!data) return;
+  data.id = existing.id;
+  data.active = existing.active;
+  appConfig[entity][idx] = data;
+  saveConfigAndRender();
+}
+
+function toggleConfigItem(entity, idx){
+  appConfig[entity][idx].active = appConfig[entity][idx].active === false ? true : false;
+  saveConfigAndRender();
+}
+
+function removeConfigItem(entity, idx){
+  const label = entity === 'validityOptions' ? appConfig[entity][idx] : (appConfig[entity][idx].name || appConfig[entity][idx].label);
+  if(!confirm(`Remover "${label}"? Esta ação não pode ser desfeita.`)) return;
+  appConfig[entity].splice(idx, 1);
+  saveConfigAndRender();
+}
+
+async function saveConfigAndRender(){
+  renderConfigLists(); // otimista: mostra já a alteração
+  const token = getCfgToken();
+  if(!token){
+    alert('A alteração não foi gravada — cola o token do GitHub e tenta novamente.');
+    return;
+  }
+  try{
+    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_PATH}`;
+    let sha = null;
+    const getRes = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if(getRes.status === 200){
+      const file = await getRes.json();
+      sha = file.sha;
+    } else if(getRes.status !== 404){
+      throw new Error(`HTTP ${getRes.status}`);
+    }
+
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: 'Atualiza configuração (Vouchers)',
+        content: utf8ToBase64(JSON.stringify(appConfig, null, 2)),
+        branch: GH_BRANCH,
+        sha: sha || undefined
+      })
+    });
+    if(!putRes.ok){
+      const errBody = await putRes.json().catch(()=>({}));
+      throw new Error(errBody.message || `HTTP ${putRes.status}`);
+    }
+  } catch(err){
+    alert('Não foi possível gravar a configuração: ' + err.message);
+  }
+}
+
+document.querySelectorAll('.btn-add').forEach(btn=>{
+  btn.addEventListener('click', ()=> addConfigItem(btn.dataset.entity));
+});
+
+const savedCfgToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+if(savedCfgToken) document.getElementById('cfg-gh-token').value = savedCfgToken;
 </script>
 </body>
 </html>

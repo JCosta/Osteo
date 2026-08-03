@@ -157,7 +157,30 @@
   .modal .btn-cancel{ background:var(--cream); color:var(--sage-dk); border:1px solid var(--sky) !important; }
   .modal .btn-confirm{ background:var(--sage); color:var(--cream); }
   .modal .btn-confirm:disabled{ opacity:.5; cursor:not-allowed; }
-  .modal .modal-error{ font-size:.78rem; color:var(--red); margin-top:.6rem; min-height:1em; }  .view-tabs{
+  .modal .modal-error{ font-size:.78rem; color:var(--red); margin-top:.6rem; min-height:1em; }
+
+  .entity-modal-box{ max-width:520px; max-height:88vh; overflow-y:auto; }
+  .field-block{ margin-bottom:1.1rem; }
+  .field-block label{
+    display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--sage); margin-bottom:.4rem;
+  }
+  .field-block input, .field-block textarea{
+    width:100%; padding:.65rem .8rem; border:1px solid var(--sky); border-radius:10px;
+    background:var(--cream); font-family:'Inter',sans-serif; font-size:.9rem; color:var(--sage-dk);
+    box-sizing:border-box;
+  }
+  .field-block textarea{ resize:vertical; min-height:70px; }
+  .chip-group{ display:flex; flex-wrap:wrap; gap:.5rem; }
+  .chip-empty{ font-size:.82rem; opacity:.6; }
+  .chip-option{
+    cursor:pointer; padding:.45rem .95rem; border-radius:999px; border:1px solid var(--sky);
+    background:var(--cream); font-size:.82rem; color:var(--sage-dk); user-select:none;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  .chip-option.selected{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+  .field-hint{ font-size:.74rem; opacity:.6; margin-top:.3rem; }
+  .view-tabs{
     display:flex; justify-content:center; gap:.6rem; margin-bottom:.5rem;
   }
   .view-tab{
@@ -195,6 +218,20 @@
   }
   .config-item-actions button.danger{ background:transparent; border:1px solid var(--red); color:var(--red); }
   .config-empty{ font-size:.85rem; opacity:.6; padding:.5rem; }
+
+  .clinic-context{
+    display:flex; align-items:center; gap:.7rem; margin-bottom:1.2rem;
+    background:var(--paper); border-radius:12px; padding:.7rem 1rem;
+    box-shadow:0 10px 24px -20px rgba(51,69,47,.35);
+  }
+  .clinic-context select{
+    padding:.5rem .8rem; border:1px solid var(--sky); border-radius:8px;
+    background:var(--cream); font-size:.9rem; font-family:'Fraunces',serif; color:var(--sage-dk);
+  }
+  .clinic-context .locked-badge{
+    font-size:.9rem; font-family:'Fraunces',serif; color:var(--sage-dk);
+  }
+  .clinic-context .locked-badge b{ color:var(--sage); }
 </style>
 </head>
 <body>
@@ -211,6 +248,8 @@
 </div>
 
 <div class="wrap" id="vales-view">
+
+  <div id="clinic-context" class="clinic-context"></div>
 
   <div class="cards">
     <div class="card"><div class="num" id="c-total">—</div><div class="lbl">Emitidos</div></div>
@@ -320,13 +359,47 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="entity-modal">
+  <div class="modal entity-modal-box">
+    <h3 id="entity-modal-title">Editar</h3>
+    <div class="modal-sub" id="entity-modal-sub"></div>
+
+    <div id="entity-modal-fields"></div>
+
+    <div class="modal-error" id="entity-modal-error"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="entity-modal-cancel">Cancelar</button>
+      <button class="btn-confirm" id="entity-modal-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const GH_OWNER = 'JCosta';
 const GH_REPO = 'Osteo';
 const GH_BRANCH = 'main';
-const REGISTRY_PATH = 'Vouchers/data/registry.json';
 const CONFIG_PATH = 'Vouchers/data/config.json';
 const TOKEN_STORAGE_KEY = 'voucherGenerator_ghToken'; // mesma chave usada no gerador
+
+/* ================================================================
+   MULTI-CLÍNICA — cada clínica tem o seu próprio registry.json, em
+   Vouchers/{clinica}/data/registry.json. Se esta página estiver a ser
+   servida a partir de Vouchers/{clinica}/management.html, a clínica
+   fica fixa automaticamente. A partir de Vouchers/management.html
+   (sem pasta de clínica), aparece um seletor para escolher qual gerir.
+   ================================================================ */
+function detectClinicSlugFromUrl(){
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  return parts.length >= 2 ? parts[parts.length - 2] : null;
+}
+function getRegistryPath(clinicId){ return `Vouchers/${clinicId}/data/registry.json`; }
+let LOCKED_CLINIC_ID = null;
+let currentClinicId = null; // clínica atualmente selecionada/ativa
+
+const DEFAULT_CONFIG = { services: [], clinics: [], therapists: [], validityOptions: [] };
+let appConfig = null;
+let appConfigSha = null;
 
 let allEntries = [];
 let currentFilter = 'todos';
@@ -340,10 +413,14 @@ function utf8ToBase64(str){
 
 async function loadRegistry(){
   const content = document.getElementById('content');
+  if(!currentClinicId){
+    content.innerHTML = '<div class="loading">Escolhe uma clínica acima para ver o registo.</div>';
+    return;
+  }
   content.innerHTML = '<div class="loading">A carregar registo...</div>';
   try{
     // leitura pública, sem token — raw.githubusercontent.com serve o ficheiro diretamente
-    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${REGISTRY_PATH}?t=${Date.now()}`;
+    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${getRegistryPath(currentClinicId)}?t=${Date.now()}`;
     const res = await fetch(url, { cache: 'no-store' });
     if(res.status === 404){
       allEntries = [];
@@ -556,7 +633,7 @@ function getToken(){
 }
 
 async function readRegistryEntries(token){
-  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${REGISTRY_PATH}`;
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(currentClinicId)}`;
   const res = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
   });
@@ -570,7 +647,7 @@ async function readRegistryEntries(token){
 }
 
 async function writeRegistryEntries(token, entries, sha, message){
-  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${REGISTRY_PATH}`;
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(currentClinicId)}`;
   const res = await fetch(apiUrl, {
     method: 'PUT',
     headers: {
@@ -878,16 +955,11 @@ document.getElementById('stats-toggle').addEventListener('click', ()=>{
 const savedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
 if(savedToken) document.getElementById('gh-token').value = savedToken;
 
-loadRegistry();
-
 /* ================================================================
    CONFIGURAÇÕES — Tipos de Consulta, Clínicas, Terapeutas, Validade
    Tudo gravado em Vouchers/data/config.json. Edição por perguntas
    sequenciais (prompt), simples e sem precisar de formulários novos.
    ================================================================ */
-const DEFAULT_CONFIG = { services: [], clinics: [], therapists: [], validityOptions: [] };
-let appConfig = null;
-let appConfigSha = null;
 
 document.getElementById('tab-vales').addEventListener('click', ()=> switchView('vales'));
 document.getElementById('tab-config').addEventListener('click', ()=> switchView('config'));
@@ -1017,24 +1089,37 @@ function uploadClinicLogo(idx){
   input.click();
 }
 
-const ENTITY_FIELDS = {
-  services: [
-    { key:'label', q:'Nome curto (aparece no dropdown do gerador):' },
-    { key:'title', q:'Título completo (aparece no vale):' },
-    { key:'professionalTitle', q:'Como se chama o profissional deste serviço? (ex: "Osteopata", "Podologista", "Fisioterapeuta"):' },
-    { key:'description', q:'Descrição (texto do vale):' },
-    { key:'duration', q:'Duração (ex: "45 minutos"):' },
-    { key:'recommendedAge', q:'Recomendado para (ex: "0–12 anos" ou "Adultos"):' }
-  ],
-  clinics: [
-    { key:'name', q:'Nome da clínica:' },
-    { key:'address', q:'Morada:' },
-    { key:'mapEmbedUrl', q:'Link do mapa (Google Maps, "output=embed"):' },
-    { key:'directionsUrl', q:'Link "Como chegar":' },
-    { key:'bookingUrl', q:'Link/WhatsApp de marcação (deixa vazio se não houver):' }
-  ]
+const ENTITY_SCHEMA = {
+  services: {
+    title: 'Tipo de consulta',
+    fields: [
+      { key:'label', label:'Nome curto (aparece no dropdown do gerador)', type:'text', placeholder:'Osteopatia Pediátrica' },
+      { key:'title', label:'Título completo (aparece no vale)', type:'text', placeholder:'Consulta de Osteopatia Pediátrica' },
+      { key:'professionalTitle', label:'Como se chama o profissional', type:'text', placeholder:'Osteopata, Podologista, Fisioterapeuta...' },
+      { key:'description', label:'Descrição (texto do vale)', type:'textarea' },
+      { key:'duration', label:'Duração', type:'text', placeholder:'45 minutos' },
+      { key:'recommendedAge', label:'Recomendado para', type:'text', placeholder:'0–12 anos / Adultos' }
+    ]
+  },
+  clinics: {
+    title: 'Clínica',
+    fields: [
+      { key:'name', label:'Nome da clínica', type:'text' },
+      { key:'address', label:'Morada', type:'text' },
+      { key:'mapEmbedUrl', label:'Link do mapa (Google Maps, com "output=embed")', type:'text' },
+      { key:'directionsUrl', label:'Link "Como chegar"', type:'text' },
+      { key:'bookingUrl', label:'WhatsApp/link de marcação (opcional)', type:'text', placeholder:'https://wa.me/351...' }
+    ]
+  },
+  therapists: {
+    title: 'Profissional',
+    fields: [
+      { key:'name', label:'Nome do profissional', type:'text' },
+      { key:'clinics', label:'Em que clínicas trabalha (podes escolher mais do que uma)', type:'chips', source:'clinics', sourceKey:'name' },
+      { key:'specialties', label:'Especialidades (pode ter mais do que uma função)', type:'chips', source:'services', sourceKey:'label' }
+    ]
+  }
 };
-
 
 function slugifyId(str){
   return String(str).toLowerCase()
@@ -1042,70 +1127,128 @@ function slugifyId(str){
     .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || ('item-' + Date.now());
 }
 
-function promptFields(fields, existing){
-  const result = existing ? { ...existing } : {};
-  for(const f of fields){
-    const current = result[f.key] || '';
-    const value = window.prompt(f.q, current);
-    if(value === null) return null; // cancelado
-    result[f.key] = value;
-  }
-  return result;
+// escapeHtml() não escapa aspas — seguro para conteúdo de texto, mas não
+// para dentro de atributos (value="...", placeholder="..."). Esta variante
+// escapa também as aspas, para os casos em que injetamos valores guardados
+// dentro de atributos HTML (ex: moradas ou descrições com aspas).
+function escapeAttr(str){
+  return escapeHtml(str).replace(/"/g, '&quot;');
 }
 
-/* Pede uma lista de nomes separados por vírgula e resolve cada um para o
-   id correspondente numa lista de itens (clínicas ou serviços), comparando
-   por nome/label sem distinguir maiúsculas/acentos. Itens não encontrados
-   são ignorados (avisa no fim). */
-function promptPickFromList(question, items, nameKey, existingIds){
-  const normalize = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-  const byNorm = {};
-  items.forEach(it => { byNorm[normalize(it[nameKey])] = it.id; });
+/* ================================================================
+   MODAL DE EDIÇÃO — mostra todos os campos de uma vez, com chips
+   clicáveis para seleção múltipla (clínicas / especialidades).
+   ================================================================ */
+let modalState = { entity: null, idx: null, chipSelections: {} };
 
-  const currentNames = (existingIds || [])
-    .map(id => items.find(it => it.id === id))
-    .filter(Boolean)
-    .map(it => it[nameKey])
-    .join(', ');
+function renderEntityField(field, existing){
+  if(field.type === 'chips'){
+    const sourceItems = appConfig[field.source] || [];
+    const selected = new Set(existing ? (existing[field.key] || []) : []);
+    modalState.chipSelections[field.key] = selected;
+    if(sourceItems.length === 0){
+      return `<div class="field-block">
+        <label>${escapeHtml(field.label)}</label>
+        <div class="chip-empty">Ainda não há nada configurado em "${field.source === 'clinics' ? 'Clínicas' : 'Tipos de Consulta'}".</div>
+      </div>`;
+    }
+    const chips = sourceItems.map(item => {
+      const isSelected = selected.has(item.id);
+      return `<span class="chip-option${isSelected ? ' selected' : ''}" data-field="${field.key}" data-id="${item.id}">${escapeHtml(item[field.sourceKey])}</span>`;
+    }).join('');
+    return `<div class="field-block">
+      <label>${escapeHtml(field.label)}</label>
+      <div class="chip-group" data-chip-group="${field.key}">${chips}</div>
+    </div>`;
+  }
 
-  const optionsLine = 'Opções disponíveis: ' + items.map(it => it[nameKey]).join(', ');
-  const input = window.prompt(`${question}\n${optionsLine}\n(separa por vírgula)`, currentNames);
-  if(input === null) return null; // cancelado
+  const value = existing ? (existing[field.key] || '') : '';
+  const placeholder = field.placeholder ? ` placeholder="${escapeAttr(field.placeholder)}"` : '';
+  if(field.type === 'textarea'){
+    return `<div class="field-block">
+      <label for="ef-${field.key}">${escapeHtml(field.label)}</label>
+      <textarea id="ef-${field.key}" data-field="${field.key}"${placeholder}>${escapeHtml(value)}</textarea>
+    </div>`;
+  }
+  return `<div class="field-block">
+    <label for="ef-${field.key}">${escapeHtml(field.label)}</label>
+    <input type="text" id="ef-${field.key}" data-field="${field.key}" value="${escapeAttr(value)}"${placeholder}>
+  </div>`;
+}
 
-  const wanted = input.split(',').map(s => s.trim()).filter(Boolean);
-  const ids = [];
-  const notFound = [];
-  wanted.forEach(name => {
-    const id = byNorm[normalize(name)];
-    if(id){ if(!ids.includes(id)) ids.push(id); }
-    else notFound.push(name);
+function openEntityModal(entity, idx){
+  const schema = ENTITY_SCHEMA[entity];
+  const existing = (idx != null) ? appConfig[entity][idx] : null;
+  modalState = { entity, idx, chipSelections: {} };
+
+  document.getElementById('entity-modal-title').textContent =
+    (existing ? 'Editar ' : 'Novo/a ') + schema.title.toLowerCase();
+  document.getElementById('entity-modal-sub').textContent =
+    existing ? `A editar: ${existing.name || existing.label}` : `A criar um/a novo/a ${schema.title.toLowerCase()}`;
+
+  const fieldsHtml = schema.fields.map(f => renderEntityField(f, existing)).join('');
+  document.getElementById('entity-modal-fields').innerHTML = fieldsHtml;
+  document.getElementById('entity-modal-error').textContent = '';
+
+  // liga o clique dos chips (alterna seleção)
+  document.querySelectorAll('#entity-modal-fields .chip-option').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const fieldKey = chip.dataset.field;
+      const id = chip.dataset.id;
+      const set = modalState.chipSelections[fieldKey];
+      if(set.has(id)){ set.delete(id); chip.classList.remove('selected'); }
+      else { set.add(id); chip.classList.add('selected'); }
+    });
   });
-  if(notFound.length){
-    alert('Não reconheci: ' + notFound.join(', ') + '\n(Confirma o nome exato, tal como está configurado.)');
+
+  document.getElementById('entity-modal').classList.add('open');
+}
+
+function closeEntityModal(){
+  document.getElementById('entity-modal').classList.remove('open');
+}
+
+function saveEntityModal(){
+  const { entity, idx } = modalState;
+  const schema = ENTITY_SCHEMA[entity];
+  const data = {};
+
+  for(const field of schema.fields){
+    if(field.type === 'chips'){
+      data[field.key] = Array.from(modalState.chipSelections[field.key] || []);
+    } else {
+      const el = document.getElementById(`ef-${field.key}`);
+      data[field.key] = el ? el.value.trim() : '';
+    }
   }
-  return ids;
+
+  // validação mínima: precisa de um nome/label preenchido
+  const nameLike = data.name || data.label;
+  if(!nameLike){
+    document.getElementById('entity-modal-error').textContent = 'Preenche pelo menos o nome.';
+    return;
+  }
+
+  if(idx != null){
+    const existing = appConfig[entity][idx];
+    data.id = existing.id;
+    data.active = existing.active;
+    appConfig[entity][idx] = data;
+  } else {
+    data.id = slugifyId(nameLike);
+    data.active = true;
+    appConfig[entity].push(data);
+  }
+
+  closeEntityModal();
+  saveConfigAndRender();
 }
 
-function promptTherapist(existing){
-  const name = window.prompt('Nome do profissional:', existing ? existing.name : '');
-  if(name === null || !name.trim()) return null;
-
-  const clinicIds = promptPickFromList(
-    'Em que clínicas trabalha?', appConfig.clinics, 'name', existing ? existing.clinics : []
-  );
-  if(clinicIds === null) return null;
-
-  const specialtyIds = promptPickFromList(
-    'Que tipos de consulta faz (especialidades)?', appConfig.services, 'label', existing ? existing.specialties : []
-  );
-  if(specialtyIds === null) return null;
-
-  return {
-    name: name.trim(),
-    clinics: clinicIds,
-    specialties: specialtyIds
-  };
-}
+document.getElementById('entity-modal-cancel').addEventListener('click', closeEntityModal);
+document.getElementById('entity-modal-save').addEventListener('click', saveEntityModal);
+document.getElementById('entity-modal').addEventListener('click', (e)=>{
+  if(e.target.id === 'entity-modal') closeEntityModal();
+});
 
 function addConfigItem(entity){
   if(entity === 'validityOptions'){
@@ -1115,22 +1258,7 @@ function addConfigItem(entity){
     saveConfigAndRender();
     return;
   }
-  if(entity === 'therapists'){
-    const data = promptTherapist(null);
-    if(!data) return;
-    data.id = slugifyId(data.name);
-    data.active = true;
-    appConfig.therapists.push(data);
-    saveConfigAndRender();
-    return;
-  }
-  const fields = ENTITY_FIELDS[entity];
-  const data = promptFields(fields, null);
-  if(!data) return;
-  data.id = slugifyId(data.name || data.label || Date.now());
-  data.active = true;
-  appConfig[entity].push(data);
-  saveConfigAndRender();
+  openEntityModal(entity, null);
 }
 
 function editConfigItem(entity, idx){
@@ -1142,24 +1270,7 @@ function editConfigItem(entity, idx){
     saveConfigAndRender();
     return;
   }
-  if(entity === 'therapists'){
-    const existing = appConfig.therapists[idx];
-    const data = promptTherapist(existing);
-    if(!data) return;
-    data.id = existing.id;
-    data.active = existing.active;
-    appConfig.therapists[idx] = data;
-    saveConfigAndRender();
-    return;
-  }
-  const fields = ENTITY_FIELDS[entity];
-  const existing = appConfig[entity][idx];
-  const data = promptFields(fields, existing);
-  if(!data) return;
-  data.id = existing.id;
-  data.active = existing.active;
-  appConfig[entity][idx] = data;
-  saveConfigAndRender();
+  openEntityModal(entity, idx);
 }
 
 
@@ -1177,6 +1288,9 @@ function removeConfigItem(entity, idx){
 
 async function saveConfigAndRender(){
   renderConfigLists(); // otimista: mostra já a alteração
+  if(typeof renderClinicContext === 'function' && document.getElementById('clinic-context')){
+    renderClinicContext();
+  }
   const token = getCfgToken();
   if(!token){
     alert('A alteração não foi gravada — cola o token do GitHub e tenta novamente.');
@@ -1224,6 +1338,46 @@ document.querySelectorAll('.btn-add').forEach(btn=>{
 
 const savedCfgToken = localStorage.getItem(TOKEN_STORAGE_KEY);
 if(savedCfgToken) document.getElementById('cfg-gh-token').value = savedCfgToken;
+
+/* ================================================================
+   ARRANQUE — carrega primeiro o config.json (para saber que clínicas
+   existem), depois decide qual gerir: fixa pelo URL, ou por seleção
+   manual (mostrando um seletor, no caso da página central).
+   ================================================================ */
+function renderClinicContext(){
+  const el = document.getElementById('clinic-context');
+  if(LOCKED_CLINIC_ID){
+    const clinic = appConfig.clinics.find(c => c.id === LOCKED_CLINIC_ID);
+    el.innerHTML = `<span class="locked-badge">Clínica: <b>${escapeHtml(clinic ? clinic.name : LOCKED_CLINIC_ID)}</b></span>`;
+    return;
+  }
+  if(!appConfig.clinics.length){
+    el.innerHTML = `<span class="locked-badge">Nenhuma clínica configurada ainda — cria uma em Configurações.</span>`;
+    return;
+  }
+  const options = appConfig.clinics.map(c =>
+    `<option value="${c.id}" ${c.id === currentClinicId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+  ).join('');
+  el.innerHTML = `<label for="clinic-select">Clínica:</label><select id="clinic-select">${options}</select>`;
+  document.getElementById('clinic-select').addEventListener('change', (e)=>{
+    currentClinicId = e.target.value;
+    loadRegistry();
+  });
+}
+
+async function initManagement(){
+  await loadConfig();
+  const slug = detectClinicSlugFromUrl();
+  if(slug && appConfig.clinics.some(c => c.id === slug)){
+    LOCKED_CLINIC_ID = slug;
+    currentClinicId = slug;
+  } else if(appConfig.clinics.length){
+    currentClinicId = appConfig.clinics[0].id;
+  }
+  renderClinicContext();
+  loadRegistry();
+}
+initManagement();
 </script>
 </body>
 </html>

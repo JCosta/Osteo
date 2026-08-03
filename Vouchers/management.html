@@ -17,16 +17,24 @@
     margin:0; background:var(--cream); font-family:'Inter',sans-serif; color:var(--sage-dk);
     min-height:100vh; padding-bottom:3rem;
   }
-  header{ padding:2rem 1.5rem 1rem; text-align:center; }
+  header{ padding:2rem 1.5rem 1rem; text-align:center; position:relative; }
   header h1{ font-family:'Fraunces',serif; color:var(--sage); font-weight:600; font-size:1.6rem; margin:0; }
   header p{ font-size:.85rem; opacity:.7; margin:.4rem 0 0; }
+  .nav-link{
+    position:absolute; top:2rem; right:1.5rem;
+    font-size:.78rem; color:var(--cream); text-decoration:none;
+    padding:.5rem 1.1rem; border-radius:999px;
+    background:var(--apricot); transition:background .15s ease;
+  }
+  .nav-link:hover{ background:#c97e46; }
+  @media(max-width:640px){ .nav-link{ position:static; display:inline-block; margin-top:1rem; } }
 
   .wrap{ max-width:1100px; margin:0 auto; padding:0 1.5rem; }
 
   .cards{
-    display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:1.5rem 0 2rem;
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:1.5rem 0 2rem;
   }
-  @media(max-width:640px){ .cards{ grid-template-columns:1fr; } }
+  @media(max-width:760px){ .cards{ grid-template-columns:1fr 1fr; } }
   .card{
     background:var(--paper); border-radius:16px; padding:1.4rem;
     box-shadow:0 14px 30px -22px rgba(51,69,47,.35); text-align:center;
@@ -34,6 +42,7 @@
   .card .num{ font-family:'Fraunces',serif; font-size:2.2rem; color:var(--sage); font-weight:600; }
   .card .lbl{ font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; opacity:.7; margin-top:.3rem; }
   .card.pendente .num{ color:var(--apricot); }
+  .card.agendado .num{ color:#5C7FA6; }
   .card.utilizado .num{ color:var(--sage); }
 
   .toolbar{
@@ -66,15 +75,18 @@
     display:inline-block; padding:.25rem .7rem; border-radius:999px; font-size:.7rem; font-weight:500;
   }
   .pill.pendente{ background:rgba(226,152,95,.18); color:#a85f2c; }
+  .pill.agendado{ background:rgba(92,127,166,.18); color:#3d5c80; }
   .pill.utilizado{ background:rgba(92,122,94,.18); color:var(--sage-dk); }
 
-  .row-actions{ display:flex; gap:.4rem; }
+  .row-actions{ display:flex; gap:.4rem; flex-wrap:wrap; }
   .row-actions a, .row-actions button{
     font-size:.72rem; padding:.35rem .7rem; border-radius:999px; border:none; cursor:pointer;
     text-decoration:none; white-space:nowrap;
   }
   .row-actions a{ background:var(--sky); color:var(--sage-dk); }
   .row-actions button{ background:var(--sage); color:var(--cream); }
+  .row-actions button.btn-schedule{ background:#5C7FA6; }
+  .row-actions button.btn-whatsapp{ background:#3fae56; }
   .row-actions button:disabled{ opacity:.5; cursor:not-allowed; }
 
   .empty, .loading, .error{
@@ -83,11 +95,39 @@
   .error{ color:var(--red); opacity:1; }
 
   .table-wrap{ overflow-x:auto; border-radius:14px; box-shadow:0 14px 30px -22px rgba(51,69,47,.35); }
+
+  /* ---------- MODAL DE AGENDAMENTO ---------- */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(51,69,47,.45);
+    align-items:center; justify-content:center; z-index:100; padding:1.5rem;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    background:var(--paper); border-radius:18px; padding:1.8rem; max-width:420px; width:100%;
+    box-shadow:0 30px 60px -20px rgba(51,69,47,.5);
+  }
+  .modal h3{ font-family:'Fraunces',serif; color:var(--sage); font-size:1.2rem; margin:0 0 .3rem; }
+  .modal .modal-sub{ font-size:.8rem; opacity:.7; margin-bottom:1.2rem; }
+  .modal label{ display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--sage); margin:1rem 0 .35rem; }
+  .modal label:first-of-type{ margin-top:0; }
+  .modal input{
+    width:100%; padding:.65rem .8rem; border:1px solid var(--sky); border-radius:10px;
+    background:var(--cream); font-family:'Inter',sans-serif; font-size:.9rem; color:var(--sage-dk);
+  }
+  .modal .modal-actions{ display:flex; gap:.6rem; margin-top:1.6rem; }
+  .modal .modal-actions button{
+    flex:1; padding:.7rem; border:none; border-radius:999px; font-size:.85rem; cursor:pointer;
+  }
+  .modal .btn-cancel{ background:var(--cream); color:var(--sage-dk); border:1px solid var(--sky) !important; }
+  .modal .btn-confirm{ background:var(--sage); color:var(--cream); }
+  .modal .btn-confirm:disabled{ opacity:.5; cursor:not-allowed; }
+  .modal .modal-error{ font-size:.78rem; color:var(--red); margin-top:.6rem; min-height:1em; }
 </style>
 </head>
 <body>
 
 <header>
+  <a class="nav-link" href="generator.html">+ Criar novo voucher</a>
   <h1>Gestão de Vouchers</h1>
   <p>Visão geral de tudo o que foi emitido, utilizado e está pendente.</p>
 </header>
@@ -97,6 +137,7 @@
   <div class="cards">
     <div class="card"><div class="num" id="c-total">—</div><div class="lbl">Emitidos</div></div>
     <div class="card pendente"><div class="num" id="c-pendente">—</div><div class="lbl">Pendentes</div></div>
+    <div class="card agendado"><div class="num" id="c-agendado">—</div><div class="lbl">Agendados</div></div>
     <div class="card utilizado"><div class="num" id="c-utilizado">—</div><div class="lbl">Utilizados</div></div>
   </div>
 
@@ -104,10 +145,11 @@
     <div class="tabs">
       <button class="tab active" data-filter="todos">Todos</button>
       <button class="tab" data-filter="pendente">Pendentes</button>
+      <button class="tab" data-filter="agendado">Agendados</button>
       <button class="tab" data-filter="utilizado">Utilizados</button>
     </div>
     <div class="token-row">
-      <input type="password" id="gh-token" placeholder="Token GitHub (só para marcar utilizado)">
+      <input type="password" id="gh-token" placeholder="Token GitHub (só para gravar alterações)">
       <label><input type="checkbox" id="gh-remember" checked> Guardar</label>
     </div>
   </div>
@@ -116,6 +158,29 @@
     <div class="loading">A carregar registo...</div>
   </div>
 
+</div>
+
+<div class="modal-overlay" id="schedule-modal">
+  <div class="modal">
+    <h3>Agendar consulta</h3>
+    <div class="modal-sub" id="modal-sub">—</div>
+
+    <label for="m-date">Data da consulta</label>
+    <input type="date" id="m-date">
+
+    <label for="m-time">Hora</label>
+    <input type="time" id="m-time" value="10:00">
+
+    <label for="m-phone">Telemóvel do paciente (WhatsApp)</label>
+    <input type="tel" id="m-phone" placeholder="912345678 ou +351912345678">
+
+    <div class="modal-error" id="modal-error"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">Cancelar</button>
+      <button class="btn-confirm" id="modal-confirm">Confirmar agendamento</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -159,10 +224,12 @@ async function loadRegistry(){
 function render(){
   const total = allEntries.length;
   const usados = allEntries.filter(e => e.status === 'utilizado').length;
-  const pendentes = total - usados;
+  const agendados = allEntries.filter(e => e.status === 'agendado').length;
+  const pendentes = total - usados - agendados;
 
   document.getElementById('c-total').textContent = total;
   document.getElementById('c-pendente').textContent = pendentes;
+  document.getElementById('c-agendado').textContent = agendados;
   document.getElementById('c-utilizado').textContent = usados;
 
   const content = document.getElementById('content');
@@ -176,25 +243,36 @@ function render(){
   }
 
   const sorted = [...filtered].sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
+  const statusLabel = { pendente: 'Pendente', agendado: 'Agendado', utilizado: 'Utilizado' };
 
-  const rows = sorted.map(e => `
+  const rows = sorted.map(e => {
+    const agendaInfo = e.status !== 'pendente' && e.appointmentDateIso
+      ? `${formatDateDisplay(e.appointmentDateIso)} ${e.appointmentTime || ''}`.trim()
+      : '—';
+
+    let actions = `<a href="${e.url}" target="_blank" rel="noopener">Ver vale</a>`;
+    if(e.status === 'pendente'){
+      actions += `<button class="btn-schedule" data-filename="${e.filename}">Agendar</button>`;
+    }
+    if(e.status === 'agendado'){
+      actions += `<button class="btn-whatsapp" data-filename="${e.filename}">Enviar WhatsApp</button>`;
+      actions += `<button class="btn-mark-used" data-filename="${e.filename}">Marcar utilizado</button>`;
+    }
+
+    return `
     <tr data-filename="${e.filename}">
       <td>${escapeHtml(e.to || '—')}</td>
       <td>${escapeHtml(e.from || '—')}</td>
       <td>${escapeHtml(e.service || '—')}</td>
       <td>${escapeHtml(e.clinic || '—')}</td>
       <td>${escapeHtml(e.voucherNumber || '—')}</td>
-      <td>${escapeHtml(e.issueDate || '—')}</td>
-      <td><span class="pill ${e.status}">${e.status === 'utilizado' ? 'Utilizado' : 'Pendente'}</span></td>
+      <td><span class="pill ${e.status}">${statusLabel[e.status] || e.status}</span></td>
+      <td>${escapeHtml(agendaInfo)}</td>
       <td>${escapeHtml(e.usedDate || '—')}</td>
-      <td>
-        <div class="row-actions">
-          <a href="${e.url}" target="_blank" rel="noopener">Ver vale</a>
-          ${e.status !== 'utilizado' ? `<button class="btn-mark-used" data-filename="${e.filename}">Marcar utilizado</button>` : ''}
-        </div>
-      </td>
+      <td><div class="row-actions">${actions}</div></td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   content.innerHTML = `
     <div class="table-wrap">
@@ -202,7 +280,7 @@ function render(){
         <thead>
           <tr>
             <th>Para</th><th>De</th><th>Serviço</th><th>Clínica</th><th>Nº vale</th>
-            <th>Emitido em</th><th>Estado</th><th>Utilizado em</th><th>Ações</th>
+            <th>Estado</th><th>Consulta</th><th>Utilizado em</th><th>Ações</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -213,6 +291,18 @@ function render(){
   content.querySelectorAll('.btn-mark-used').forEach(btn=>{
     btn.addEventListener('click', ()=> markAsUsed(btn.dataset.filename, btn));
   });
+  content.querySelectorAll('.btn-schedule').forEach(btn=>{
+    btn.addEventListener('click', ()=> openScheduleModal(btn.dataset.filename));
+  });
+  content.querySelectorAll('.btn-whatsapp').forEach(btn=>{
+    btn.addEventListener('click', ()=> sendWhatsApp(btn.dataset.filename));
+  });
+}
+
+function formatDateDisplay(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
 }
 
 function escapeHtml(str){
@@ -221,57 +311,67 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-async function markAsUsed(filename, btnEl){
+function getToken(){
   const token = document.getElementById('gh-token').value.trim();
   if(!token){
-    alert('Cola o teu token de acesso do GitHub no campo acima para poderes marcar vales como utilizados.');
-    return;
+    alert('Cola o teu token de acesso do GitHub no campo acima primeiro.');
+    return null;
   }
   const remember = document.getElementById('gh-remember').checked;
   if(remember) localStorage.setItem(TOKEN_STORAGE_KEY, token);
   else localStorage.removeItem(TOKEN_STORAGE_KEY);
+  return token;
+}
+
+async function readRegistryEntries(token){
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${REGISTRY_PATH}`;
+  const res = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+  });
+  if(!res.ok) throw new Error(`Não consegui ler o registo (HTTP ${res.status}).`);
+  const file = await res.json();
+  const binary = atob(file.content.replace(/\n/g,''));
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  const entries = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+  return { entries, sha: file.sha };
+}
+
+async function writeRegistryEntries(token, entries, sha, message){
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${REGISTRY_PATH}`;
+  const res = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message, content: utf8ToBase64(JSON.stringify(entries, null, 2)), branch: GH_BRANCH, sha
+    })
+  });
+  if(!res.ok){
+    const errBody = await res.json().catch(()=>({}));
+    throw new Error(errBody.message || `HTTP ${res.status}`);
+  }
+}
+
+async function markAsUsed(filename, btnEl){
+  const token = getToken();
+  if(!token) return;
 
   btnEl.disabled = true;
   btnEl.textContent = 'A gravar...';
 
   try{
-    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${REGISTRY_PATH}`;
-    const getRes = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
-    });
-    if(!getRes.ok) throw new Error(`Não consegui ler o registo (HTTP ${getRes.status}).`);
-    const file = await getRes.json();
-    const binary = atob(file.content.replace(/\n/g,''));
-    const bytes = new Uint8Array(binary.length);
-    for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
-    const entries = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-
+    const { entries, sha } = await readRegistryEntries(token);
     const idx = entries.findIndex(e => e.filename === filename);
     if(idx === -1) throw new Error('Vale não encontrado no registo (pode ter sido atualizado entretanto).');
 
-    const todayDisplay = new Date().toLocaleDateString('pt-PT');
     entries[idx].status = 'utilizado';
-    entries[idx].usedDate = todayDisplay;
+    entries[idx].usedDate = new Date().toLocaleDateString('pt-PT');
 
-    const putRes = await fetch(apiUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: `Marca vale como utilizado: ${filename}`,
-        content: utf8ToBase64(JSON.stringify(entries, null, 2)),
-        branch: GH_BRANCH,
-        sha: file.sha
-      })
-    });
-    if(!putRes.ok){
-      const errBody = await putRes.json().catch(()=>({}));
-      throw new Error(errBody.message || `HTTP ${putRes.status}`);
-    }
-
+    await writeRegistryEntries(token, entries, sha, `Marca vale como utilizado: ${filename}`);
     allEntries = entries;
     render();
   } catch(err){
@@ -279,6 +379,157 @@ async function markAsUsed(filename, btnEl){
     btnEl.disabled = false;
     btnEl.textContent = 'Marcar utilizado';
   }
+}
+
+/* ================================================================
+   AGENDAMENTO — modal, link do WhatsApp e link "adicionar ao
+   calendário" (Google Calendar).
+   ================================================================ */
+let scheduleTargetFilename = null;
+
+function openScheduleModal(filename){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry) return;
+  scheduleTargetFilename = filename;
+
+  document.getElementById('modal-sub').textContent =
+    `${entry.to || 'Paciente'} · Vale ${entry.voucherNumber || ''} · ${entry.service || ''}`;
+  document.getElementById('m-date').value = '';
+  document.getElementById('m-time').value = '10:00';
+  document.getElementById('m-phone').value = '';
+  document.getElementById('modal-error').textContent = '';
+  document.getElementById('schedule-modal').classList.add('open');
+}
+
+function closeScheduleModal(){
+  document.getElementById('schedule-modal').classList.remove('open');
+  scheduleTargetFilename = null;
+}
+
+document.getElementById('modal-cancel').addEventListener('click', closeScheduleModal);
+document.getElementById('schedule-modal').addEventListener('click', (e)=>{
+  if(e.target.id === 'schedule-modal') closeScheduleModal();
+});
+
+/* Normaliza o número para o formato internacional que o wa.me precisa
+   (só dígitos, com indicativo). Assume Portugal (+351) se vierem
+   9 dígitos sem indicativo. */
+function normalizePhone(raw){
+  let digits = raw.replace(/[^\d+]/g,'');
+  digits = digits.replace(/^\+/, '');
+  if(digits.length === 9) digits = '351' + digits;
+  return digits;
+}
+
+function buildCalendarLink(entry, startIso, endIso){
+  const fmt = (iso) => iso.replace(/[-:]/g,'').split('.')[0];
+  const text = encodeURIComponent(entry.service || 'Consulta');
+  const details = encodeURIComponent(`Vale nº ${entry.voucherNumber || ''} — ${entry.service || ''}`);
+  const location = encodeURIComponent(entry.clinic || '');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${fmt(startIso)}/${fmt(endIso)}&details=${details}&location=${location}&ctz=Europe/Lisbon`;
+}
+
+function buildWhatsAppMessage(entry){
+  const isPediatric = /pediátric/i.test(entry.service || '');
+  const details = [
+    `📋 Vale nº ${entry.voucherNumber || ''}`,
+    `📍 Local: ${entry.clinic || ''}`,
+    `🗓️ Data: ${formatDateDisplay(entry.appointmentDateIso)} às ${entry.appointmentTime || ''}`
+  ];
+
+  let lines;
+  if(isPediatric){
+    lines = [
+      'Olá! 🌿',
+      `A ${entry.service ? entry.service.charAt(0).toLowerCase() + entry.service.slice(1) : 'consulta'} de ${entry.to || 'o(a) vosso(a) filho(a)'} está confirmada:`,
+      '',
+      ...details,
+      '',
+      'Se a criança apresentar sintomas de mal-estar, febre ou qualquer indisposição perto da data, pedimos que remarquem a consulta — a prioridade é sempre o bem-estar dela.',
+      '',
+      'Para qualquer outro imprevisto, pedimos aviso com pelo menos 48h de antecedência.',
+      '',
+      `Adicionar ao calendário: ${entry.calendarLink || ''}`,
+      '',
+      'Até breve! 💛'
+    ];
+  } else {
+    lines = [
+      `Olá ${entry.to || ''}! 🌿`,
+      `A tua ${entry.service ? entry.service.charAt(0).toLowerCase() + entry.service.slice(1) : 'consulta'} está confirmada:`,
+      '',
+      ...details,
+      '',
+      'Se não puderes comparecer ou surgir algum imprevisto, pedimos que avises com pelo menos 48h de antecedência.',
+      '',
+      `Adicionar ao calendário: ${entry.calendarLink || ''}`,
+      '',
+      'Até breve! 💛'
+    ];
+  }
+  return lines.join('\n');
+}
+
+document.getElementById('modal-confirm').addEventListener('click', async ()=>{
+  const errorEl = document.getElementById('modal-error');
+  errorEl.textContent = '';
+
+  const filename = scheduleTargetFilename;
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry) return;
+
+  const dateIso = document.getElementById('m-date').value;
+  const time = document.getElementById('m-time').value;
+  const phoneRaw = document.getElementById('m-phone').value.trim();
+
+  if(!dateIso){ errorEl.textContent = 'Escolhe a data da consulta.'; return; }
+  if(!time){ errorEl.textContent = 'Escolhe a hora da consulta.'; return; }
+  if(!phoneRaw){ errorEl.textContent = 'Indica o telemóvel do paciente.'; return; }
+
+  const token = getToken();
+  if(!token) return;
+
+  const confirmBtn = document.getElementById('modal-confirm');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'A gravar...';
+
+  try{
+    const durationMin = entry.duration ? parseInt(entry.duration, 10) || 45 : 45;
+    const start = new Date(`${dateIso}T${time}:00`);
+    const end = new Date(start.getTime() + durationMin * 60000);
+    const startIso = start.toISOString();
+    const endIso = end.toISOString();
+
+    const { entries, sha } = await readRegistryEntries(token);
+    const idx = entries.findIndex(e => e.filename === filename);
+    if(idx === -1) throw new Error('Vale não encontrado no registo.');
+
+    entries[idx].status = 'agendado';
+    entries[idx].appointmentDateIso = dateIso;
+    entries[idx].appointmentTime = time;
+    entries[idx].patientPhone = normalizePhone(phoneRaw);
+    entries[idx].calendarLink = buildCalendarLink(entries[idx], startIso, endIso);
+
+    await writeRegistryEntries(token, entries, sha, `Agenda vale: ${filename}`);
+    allEntries = entries;
+    closeScheduleModal();
+    render();
+  } catch(err){
+    errorEl.textContent = 'Não foi possível gravar: ' + err.message;
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Confirmar agendamento';
+  }
+});
+
+function sendWhatsApp(filename){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry || !entry.patientPhone){
+    alert('Este vale ainda não tem número de telemóvel guardado.');
+    return;
+  }
+  const message = encodeURIComponent(buildWhatsAppMessage(entry));
+  window.open(`https://wa.me/${entry.patientPhone}?text=${message}`, '_blank');
 }
 
 document.querySelectorAll('.tab').forEach(tab=>{

@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão de Vouchers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF5EA; --paper:#FFFDF8; --sage:#5C7A5E; --sage-dk:#33452F;
+    --apricot:#E2985F; --sky:#B9CDCB; --red:#C0604A;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--cream); font-family:'Inter',sans-serif; color:var(--sage-dk);
+    min-height:100vh; padding-bottom:3rem;
+  }
+  header{ padding:2rem 1.5rem 1rem; text-align:center; position:relative; }
+  header h1{ font-family:'Fraunces',serif; color:var(--sage); font-weight:600; font-size:1.6rem; margin:0; }
+  header p{ font-size:.85rem; opacity:.7; margin:.4rem 0 0; }
+  .nav-link{
+    position:absolute; top:2rem; right:1.5rem;
+    font-size:.78rem; color:var(--cream); text-decoration:none;
+    padding:.5rem 1.1rem; border-radius:999px;
+    background:var(--apricot); transition:background .15s ease;
+  }
+  .nav-link:hover{ background:#c97e46; }
+  @media(max-width:640px){ .nav-link{ position:static; display:inline-block; margin-top:1rem; } }
+
+  .wrap{ max-width:1100px; margin:0 auto; padding:0 1.5rem; }
+
+  .cards{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:1rem; margin:1.5rem 0 2rem;
+  }
+  @media(max-width:900px){ .cards{ grid-template-columns:1fr 1fr 1fr; } }
+  @media(max-width:560px){ .cards{ grid-template-columns:1fr 1fr; } }
+  .card{
+    background:var(--paper); border-radius:16px; padding:1.4rem;
+    box-shadow:0 14px 30px -22px rgba(51,69,47,.35); text-align:center;
+  }
+  .card .num{ font-family:'Fraunces',serif; font-size:2.2rem; color:var(--sage); font-weight:600; }
+  .card .lbl{ font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; opacity:.7; margin-top:.3rem; }
+  .card.pendente .num{ color:var(--apricot); }
+  .card.agendado .num{ color:#5C7FA6; }
+  .card.utilizado .num{ color:var(--sage); }
+  .card.cancelado .num{ color:var(--red); }
+
+  .toolbar{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
+    margin-bottom:1rem;
+  }
+  .tabs{ display:flex; gap:.5rem; flex-wrap:wrap; }
+  .tab{
+    padding:.5rem 1rem; border-radius:999px; border:1px solid var(--sky); background:var(--paper);
+    font-size:.8rem; cursor:pointer; color:var(--sage-dk);
+  }
+  .tab.active{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+
+  .search-row{ display:flex; gap:.5rem; align-items:center; margin-bottom:1rem; }
+  .search-row input{
+    flex:1; max-width:320px; padding:.6rem .9rem; border:1px solid var(--sky); border-radius:999px;
+    background:var(--paper); font-size:.85rem; color:var(--sage-dk);
+  }
+
+  .token-row{ display:flex; gap:.5rem; align-items:center; font-size:.78rem; }
+  .token-row input{
+    padding:.5rem .7rem; border:1px solid var(--sky); border-radius:8px; background:var(--paper);
+    font-size:.8rem; width:180px;
+  }
+  .token-row label{ display:flex; align-items:center; gap:.3rem; white-space:nowrap; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--paper); border-radius:14px; overflow:hidden; }
+  thead th{
+    text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.08em;
+    padding:.8rem .9rem; background:var(--sage); color:var(--cream);
+  }
+  tbody td{ padding:.8rem .9rem; font-size:.85rem; border-top:1px solid var(--cream); vertical-align:middle; }
+  tbody tr:hover{ background:rgba(185,205,203,.15); }
+  tbody tr.expiring{ background:rgba(192,96,74,.07); }
+
+  .pill{
+    display:inline-block; padding:.25rem .7rem; border-radius:999px; font-size:.7rem; font-weight:500;
+  }
+  .pill.pendente{ background:rgba(226,152,95,.18); color:#a85f2c; }
+  .pill.agendado{ background:rgba(92,127,166,.18); color:#3d5c80; }
+  .pill.utilizado{ background:rgba(92,122,94,.18); color:var(--sage-dk); }
+  .pill.cancelado{ background:rgba(192,96,74,.15); color:var(--red); text-decoration:line-through; }
+
+  .validity-warn{ color:var(--red); font-weight:600; }
+  .validity-ok{ opacity:.75; }
+
+  .notes-preview{ font-size:.78rem; opacity:.75; max-width:140px; display:block;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .row-actions{ display:flex; gap:.4rem; flex-wrap:wrap; }
+  .row-actions a, .row-actions button{
+    font-size:.72rem; padding:.35rem .7rem; border-radius:999px; border:none; cursor:pointer;
+    text-decoration:none; white-space:nowrap;
+  }
+  .row-actions a{ background:var(--sky); color:var(--sage-dk); }
+  .row-actions button{ background:var(--sage); color:var(--cream); }
+  .row-actions button.btn-schedule{ background:#5C7FA6; }
+  .row-actions button.btn-whatsapp{ background:#3fae56; }
+  .row-actions button.btn-reminder{ background:#8a9e5c; }
+  .row-actions button.btn-copy{ background:var(--sky); color:var(--sage-dk); }
+  .row-actions button.btn-cancel-voucher{ background:transparent; border:1px solid var(--red) !important; color:var(--red); }
+  .row-actions button.btn-notes{ background:transparent; border:1px solid var(--sky) !important; color:var(--sage-dk); }
+  .row-actions button:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .empty, .loading, .error{
+    text-align:center; padding:3rem 1rem; color:var(--sage-dk); opacity:.7; font-size:.9rem;
+  }
+  .error{ color:var(--red); opacity:1; }
+
+  .stats-toggle{
+    display:inline-block; margin-bottom:1rem; font-size:.8rem; color:var(--sage);
+    cursor:pointer; text-decoration:underline; background:none; border:none; padding:0;
+  }
+  .stats-panel{ display:none; margin-bottom:1.5rem; gap:1rem; grid-template-columns:1fr 1fr; }
+  .stats-panel.open{ display:grid; }
+  @media(max-width:640px){ .stats-panel.open{ grid-template-columns:1fr; } }
+  .stats-box{
+    background:var(--paper); border-radius:14px; padding:1.2rem 1.4rem;
+    box-shadow:0 14px 30px -22px rgba(51,69,47,.35);
+  }
+  .stats-box h4{ font-family:'Fraunces',serif; color:var(--sage); font-size:1rem; margin:0 0 .7rem; }
+  .stats-box table{ box-shadow:none; }
+  .stats-box th, .stats-box td{ font-size:.78rem; padding:.4rem .5rem; }
+  .stats-box thead th{ background:transparent; color:var(--sage-dk); border-bottom:1px solid var(--sky); }
+
+  .table-wrap{ overflow-x:auto; border-radius:14px; box-shadow:0 14px 30px -22px rgba(51,69,47,.35); }
+
+  /* ---------- MODAL DE AGENDAMENTO ---------- */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(51,69,47,.45);
+    align-items:center; justify-content:center; z-index:100; padding:1.5rem;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    background:var(--paper); border-radius:18px; padding:1.8rem; max-width:420px; width:100%;
+    box-shadow:0 30px 60px -20px rgba(51,69,47,.5);
+  }
+  .modal h3{ font-family:'Fraunces',serif; color:var(--sage); font-size:1.2rem; margin:0 0 .3rem; }
+  .modal .modal-sub{ font-size:.8rem; opacity:.7; margin-bottom:1.2rem; }
+  .modal label{ display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--sage); margin:1rem 0 .35rem; }
+  .modal label:first-of-type{ margin-top:0; }
+  .modal input{
+    width:100%; padding:.65rem .8rem; border:1px solid var(--sky); border-radius:10px;
+    background:var(--cream); font-family:'Inter',sans-serif; font-size:.9rem; color:var(--sage-dk);
+  }
+  .modal .modal-actions{ display:flex; gap:.6rem; margin-top:1.6rem; }
+  .modal .modal-actions button{
+    flex:1; padding:.7rem; border:none; border-radius:999px; font-size:.85rem; cursor:pointer;
+  }
+  .modal .btn-cancel{ background:var(--cream); color:var(--sage-dk); border:1px solid var(--sky) !important; }
+  .modal .btn-confirm{ background:var(--sage); color:var(--cream); }
+  .modal .btn-confirm:disabled{ opacity:.5; cursor:not-allowed; }
+  .modal .modal-error{ font-size:.78rem; color:var(--red); margin-top:.6rem; min-height:1em; }
+
+  .entity-modal-box{ max-width:520px; max-height:88vh; overflow-y:auto; }
+  .field-block{ margin-bottom:1.1rem; }
+  .field-block label{
+    display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--sage); margin-bottom:.4rem;
+  }
+  .field-block input, .field-block textarea{
+    width:100%; padding:.65rem .8rem; border:1px solid var(--sky); border-radius:10px;
+    background:var(--cream); font-family:'Inter',sans-serif; font-size:.9rem; color:var(--sage-dk);
+    box-sizing:border-box;
+  }
+  .field-block textarea{ resize:vertical; min-height:70px; }
+  .chip-group{ display:flex; flex-wrap:wrap; gap:.5rem; }
+  .chip-empty{ font-size:.82rem; opacity:.6; }
+  .chip-option{
+    cursor:pointer; padding:.45rem .95rem; border-radius:999px; border:1px solid var(--sky);
+    background:var(--cream); font-size:.82rem; color:var(--sage-dk); user-select:none;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  .chip-option.selected{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+  .field-hint{ font-size:.74rem; opacity:.6; margin-top:.3rem; }
+  .view-tabs{
+    display:flex; justify-content:center; gap:.6rem; margin-bottom:.5rem;
+  }
+  .view-tab{
+    padding:.55rem 1.3rem; border-radius:999px; border:1px solid var(--sky); background:var(--paper);
+    font-size:.85rem; cursor:pointer; color:var(--sage-dk); font-family:'Fraunces',serif;
+  }
+  .view-tab.active{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+
+  .config-token-row{ display:flex; gap:.6rem; align-items:center; margin:1.5rem 0; }
+  .config-token-row input{
+    flex:1; max-width:340px; padding:.6rem .9rem; border:1px solid var(--sky); border-radius:8px;
+    background:var(--paper); font-size:.85rem;
+  }
+
+  .config-section{ margin-bottom:2rem; }
+  .config-section-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:.8rem; }
+  .config-section-head h3{ font-family:'Fraunces',serif; color:var(--sage); font-size:1.1rem; margin:0; }
+  .btn-add{
+    background:var(--sage); color:var(--cream); border:none; padding:.5rem 1rem;
+    border-radius:999px; font-size:.8rem; cursor:pointer;
+  }
+  .config-list{ display:flex; flex-direction:column; gap:.6rem; }
+  .config-item{
+    background:var(--paper); border-radius:12px; padding:.9rem 1.1rem;
+    display:flex; justify-content:space-between; align-items:center; gap:1rem;
+    box-shadow:0 10px 24px -20px rgba(51,69,47,.35);
+  }
+  .config-item.inactive{ opacity:.55; }
+  .config-item-info{ font-size:.88rem; color:var(--sage-dk); }
+  .config-item-info .sub{ font-size:.76rem; opacity:.7; margin-top:.15rem; }
+  .config-item-actions{ display:flex; gap:.4rem; flex-shrink:0; }
+  .config-item-actions button{
+    font-size:.72rem; padding:.35rem .7rem; border-radius:999px; border:none; cursor:pointer;
+    background:var(--sky); color:var(--sage-dk); white-space:nowrap;
+  }
+  .config-item-actions button.danger{ background:transparent; border:1px solid var(--red); color:var(--red); }
+  .config-empty{ font-size:.85rem; opacity:.6; padding:.5rem; }
+
+  .clinic-context{
+    display:flex; align-items:center; gap:.7rem; margin-bottom:1.2rem;
+    background:var(--paper); border-radius:12px; padding:.7rem 1rem;
+    box-shadow:0 10px 24px -20px rgba(51,69,47,.35);
+  }
+  .clinic-context select{
+    padding:.5rem .8rem; border:1px solid var(--sky); border-radius:8px;
+    background:var(--cream); font-size:.9rem; font-family:'Fraunces',serif; color:var(--sage-dk);
+  }
+  .clinic-context .locked-badge{
+    font-size:.9rem; font-family:'Fraunces',serif; color:var(--sage-dk);
+  }
+  .clinic-context .locked-badge b{ color:var(--sage); }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="nav-link" href="generator.html">+ Criar novo voucher</a>
+  <h1>Gestão de Vouchers</h1>
+  <p>Visão geral de tudo o que foi emitido, utilizado e está pendente.</p>
+</header>
+
+<div class="view-tabs">
+  <button class="view-tab active" id="tab-vales">Vales</button>
+  <button class="view-tab" id="tab-config">Configurações</button>
+</div>
+
+<div class="wrap" id="vales-view">
+
+  <div id="clinic-context" class="clinic-context"></div>
+
+  <div class="cards">
+    <div class="card"><div class="num" id="c-total">—</div><div class="lbl">Emitidos</div></div>
+    <div class="card pendente"><div class="num" id="c-pendente">—</div><div class="lbl">Pendentes</div></div>
+    <div class="card agendado"><div class="num" id="c-agendado">—</div><div class="lbl">Agendados</div></div>
+    <div class="card utilizado"><div class="num" id="c-utilizado">—</div><div class="lbl">Utilizados</div></div>
+    <div class="card cancelado"><div class="num" id="c-cancelado">—</div><div class="lbl">Cancelados</div></div>
+  </div>
+
+  <button class="stats-toggle" id="stats-toggle">+ Ver estatísticas por clínica/serviço</button>
+  <div class="stats-panel" id="stats-panel">
+    <div class="stats-box">
+      <h4>Por clínica</h4>
+      <table><thead><tr><th>Clínica</th><th>Emitidos</th><th>Utilizados</th></tr></thead>
+        <tbody id="stats-clinic"></tbody></table>
+    </div>
+    <div class="stats-box">
+      <h4>Por serviço</h4>
+      <table><thead><tr><th>Serviço</th><th>Emitidos</th><th>Utilizados</th></tr></thead>
+        <tbody id="stats-service"></tbody></table>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <input type="search" id="search-input" placeholder="Pesquisar por nome ou nº de vale...">
+  </div>
+
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="tab active" data-filter="todos">Todos</button>
+      <button class="tab" data-filter="pendente">Pendentes</button>
+      <button class="tab" data-filter="agendado">Agendados</button>
+      <button class="tab" data-filter="utilizado">Utilizados</button>
+      <button class="tab" data-filter="cancelado">Cancelados</button>
+    </div>
+    <div class="token-row">
+      <input type="password" id="gh-token" placeholder="Token GitHub (só para gravar alterações)">
+      <label><input type="checkbox" id="gh-remember" checked> Guardar</label>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="loading">A carregar registo...</div>
+  </div>
+
+</div>
+
+<div class="wrap" id="config-view" style="display:none;">
+  <div class="config-token-row">
+    <input type="password" id="cfg-gh-token" placeholder="Token GitHub (necessário para gravar alterações)">
+    <label><input type="checkbox" id="cfg-gh-remember" checked> Guardar</label>
+  </div>
+
+  <div class="config-section">
+    <div class="config-section-head">
+      <h3>Tipos de Consulta</h3>
+      <button class="btn-add" data-entity="services">+ Adicionar</button>
+    </div>
+    <div id="list-services" class="config-list"></div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-section-head">
+      <h3>Clínicas</h3>
+      <button class="btn-add" data-entity="clinics">+ Adicionar</button>
+    </div>
+    <div id="list-clinics" class="config-list"></div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-section-head">
+      <h3>Terapeutas</h3>
+      <button class="btn-add" data-entity="therapists">+ Adicionar</button>
+    </div>
+    <div id="list-therapists" class="config-list"></div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-section-head">
+      <h3>Textos de Validade</h3>
+      <button class="btn-add" data-entity="validityOptions">+ Adicionar</button>
+    </div>
+    <div id="list-validityOptions" class="config-list"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="schedule-modal">
+  <div class="modal">
+    <h3 id="modal-title">Agendar consulta</h3>
+    <div class="modal-sub" id="modal-sub">—</div>
+
+    <label for="m-date">Data da consulta</label>
+    <input type="date" id="m-date">
+
+    <label for="m-time">Hora</label>
+    <input type="time" id="m-time" value="10:00">
+
+    <label for="m-phone">Telemóvel do paciente (WhatsApp)</label>
+    <input type="tel" id="m-phone" placeholder="912345678 ou +351912345678">
+
+    <div class="modal-error" id="modal-error"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">Cancelar</button>
+      <button class="btn-confirm" id="modal-confirm">Confirmar agendamento</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="entity-modal">
+  <div class="modal entity-modal-box">
+    <h3 id="entity-modal-title">Editar</h3>
+    <div class="modal-sub" id="entity-modal-sub"></div>
+
+    <div id="entity-modal-fields"></div>
+
+    <div class="modal-error" id="entity-modal-error"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="entity-modal-cancel">Cancelar</button>
+      <button class="btn-confirm" id="entity-modal-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GH_OWNER = 'JCosta';
+const GH_REPO = 'Osteo';
+const GH_BRANCH = 'main';
+const CONFIG_PATH = 'Vouchers/data/config.json';
+const TOKEN_STORAGE_KEY = 'voucherGenerator_ghToken'; // mesma chave usada no gerador
+
+/* ================================================================
+   MULTI-CLÍNICA — cada clínica tem o seu próprio registry.json, em
+   Vouchers/{clinica}/data/registry.json. Se esta página estiver a ser
+   servida a partir de Vouchers/{clinica}/management.html, a clínica
+   fica fixa automaticamente. A partir de Vouchers/management.html
+   (sem pasta de clínica), aparece um seletor para escolher qual gerir.
+   ================================================================ */
+function detectClinicSlugFromUrl(){
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  return parts.length >= 2 ? parts[parts.length - 2] : null;
+}
+function getRegistryPath(clinicId){ return `Vouchers/${clinicId}/data/registry.json`; }
+let LOCKED_CLINIC_ID = null;
+let currentClinicId = null; // clínica atualmente selecionada/ativa
+
+const DEFAULT_CONFIG = { services: [], clinics: [], therapists: [], validityOptions: [] };
+let appConfig = null;
+let appConfigSha = null;
+
+let allEntries = [];
+let currentFilter = 'todos';
+
+function utf8ToBase64(str){
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+
+async function loadRegistry(){
+  const content = document.getElementById('content');
+  if(!currentClinicId){
+    content.innerHTML = '<div class="loading">Escolhe uma clínica acima para ver o registo.</div>';
+    return;
+  }
+  content.innerHTML = '<div class="loading">A carregar registo...</div>';
+  try{
+    // leitura pública, sem token — raw.githubusercontent.com serve o ficheiro diretamente
+    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${getRegistryPath(currentClinicId)}?t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if(res.status === 404){
+      allEntries = [];
+    } else if(!res.ok){
+      throw new Error(`HTTP ${res.status}`);
+    } else {
+      allEntries = await res.json();
+    }
+    render();
+  } catch(err){
+    content.innerHTML = `<div class="error">Não consegui carregar o registo (${err.message}). Confirma se já existe algum vale publicado.</div>`;
+    console.error(err);
+  }
+}
+
+let searchTerm = '';
+
+function parseValidityMonths(validityText){
+  const m = String(validityText || '').match(/(\d+)\s*m[eê]s/i);
+  return m ? parseInt(m[1], 10) : 3; // por defeito 3 meses, se não conseguir ler
+}
+
+function computeExpiry(entry){
+  if(!entry.issueDateIso) return null;
+  const months = parseValidityMonths(entry.validityText);
+  const d = new Date(entry.issueDateIso + 'T00:00:00');
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function render(){
+  const total = allEntries.length;
+  const usados = allEntries.filter(e => e.status === 'utilizado').length;
+  const agendados = allEntries.filter(e => e.status === 'agendado').length;
+  const cancelados = allEntries.filter(e => e.status === 'cancelado').length;
+  const pendentes = total - usados - agendados - cancelados;
+
+  document.getElementById('c-total').textContent = total;
+  document.getElementById('c-pendente').textContent = pendentes;
+  document.getElementById('c-agendado').textContent = agendados;
+  document.getElementById('c-utilizado').textContent = usados;
+  document.getElementById('c-cancelado').textContent = cancelados;
+
+  renderStats();
+
+  const content = document.getElementById('content');
+  let filtered = currentFilter === 'todos'
+    ? allEntries
+    : allEntries.filter(e => e.status === currentFilter);
+
+  if(searchTerm){
+    const q = searchTerm.toLowerCase();
+    filtered = filtered.filter(e =>
+      (e.to || '').toLowerCase().includes(q) ||
+      (e.from || '').toLowerCase().includes(q) ||
+      (e.voucherNumber || '').toLowerCase().includes(q)
+    );
+  }
+
+  if(filtered.length === 0){
+    content.innerHTML = '<div class="empty">Nenhum vale para mostrar.</div>';
+    return;
+  }
+
+  const sorted = [...filtered].sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
+  const statusLabel = { pendente: 'Pendente', agendado: 'Agendado', utilizado: 'Utilizado', cancelado: 'Cancelado' };
+
+  const now = new Date();
+
+  const rows = sorted.map(e => {
+    const agendaInfo = (e.status === 'agendado' || e.status === 'utilizado') && e.appointmentDateIso
+      ? `${formatDateDisplay(e.appointmentDateIso)} ${e.appointmentTime || ''}`.trim()
+      : '—';
+
+    // aviso de validade — só interessa enquanto o vale ainda não foi usado/cancelado
+    let validityCell = '—';
+    let expiringClass = '';
+    if(e.status === 'pendente' || e.status === 'agendado'){
+      const expiry = computeExpiry(e);
+      if(expiry){
+        const daysLeft = Math.ceil((expiry - now) / 86400000);
+        const expiryDisplay = expiry.toLocaleDateString('pt-PT');
+        if(daysLeft < 0){
+          validityCell = `<span class="validity-warn">Expirado (${expiryDisplay})</span>`;
+          expiringClass = 'expiring';
+        } else if(daysLeft <= 30){
+          validityCell = `<span class="validity-warn">${expiryDisplay} (${daysLeft}d)</span>`;
+          expiringClass = 'expiring';
+        } else {
+          validityCell = `<span class="validity-ok">${expiryDisplay}</span>`;
+        }
+      }
+    }
+
+    let actions = `<a href="${e.url}" target="_blank" rel="noopener">Ver vale</a>`;
+    if(e.status === 'pendente'){
+      actions += `<button class="btn-schedule" data-filename="${e.filename}">Agendar</button>`;
+      actions += `<button class="btn-cancel-voucher" data-filename="${e.filename}">Cancelar</button>`;
+    }
+    if(e.status === 'agendado'){
+      actions += `<button class="btn-whatsapp" data-filename="${e.filename}">Enviar WhatsApp</button>`;
+      actions += `<button class="btn-copy" data-filename="${e.filename}">Copiar mensagem</button>`;
+      actions += `<button class="btn-reminder" data-filename="${e.filename}">Enviar lembrete</button>`;
+      actions += `<button class="btn-schedule" data-filename="${e.filename}">Reagendar</button>`;
+      actions += `<button class="btn-mark-used" data-filename="${e.filename}">Marcar utilizado</button>`;
+      actions += `<button class="btn-cancel-voucher" data-filename="${e.filename}">Cancelar</button>`;
+    }
+    actions += `<button class="btn-notes" data-filename="${e.filename}">Notas</button>`;
+
+    const notesPreview = e.notes ? escapeHtml(e.notes) : '<span style="opacity:.4">—</span>';
+
+    return `
+    <tr data-filename="${e.filename}" class="${expiringClass}">
+      <td>${escapeHtml(e.to || '—')}</td>
+      <td>${escapeHtml(e.from || '—')}</td>
+      <td>${escapeHtml(e.service || '—')}</td>
+      <td>${escapeHtml(e.clinic || '—')}</td>
+      <td>${escapeHtml(e.voucherNumber || '—')}</td>
+      <td><span class="pill ${e.status}">${statusLabel[e.status] || e.status}</span></td>
+      <td>${escapeHtml(agendaInfo)}</td>
+      <td>${validityCell}</td>
+      <td><span class="notes-preview" title="${e.notes ? escapeHtml(e.notes) : ''}">${notesPreview}</span></td>
+      <td><div class="row-actions">${actions}</div></td>
+    </tr>
+  `;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Para</th><th>De</th><th>Serviço</th><th>Clínica</th><th>Nº vale</th>
+            <th>Estado</th><th>Consulta</th><th>Validade</th><th>Notas</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+
+  content.querySelectorAll('.btn-mark-used').forEach(btn=>{
+    btn.addEventListener('click', ()=> markAsUsed(btn.dataset.filename, btn));
+  });
+  content.querySelectorAll('.btn-schedule').forEach(btn=>{
+    btn.addEventListener('click', ()=> openScheduleModal(btn.dataset.filename));
+  });
+  content.querySelectorAll('.btn-whatsapp').forEach(btn=>{
+    btn.addEventListener('click', ()=> sendWhatsApp(btn.dataset.filename));
+  });
+  content.querySelectorAll('.btn-copy').forEach(btn=>{
+    btn.addEventListener('click', ()=> copyMessage(btn.dataset.filename, btn));
+  });
+  content.querySelectorAll('.btn-reminder').forEach(btn=>{
+    btn.addEventListener('click', ()=> sendReminder(btn.dataset.filename));
+  });
+  content.querySelectorAll('.btn-cancel-voucher').forEach(btn=>{
+    btn.addEventListener('click', ()=> cancelVoucher(btn.dataset.filename, btn));
+  });
+  content.querySelectorAll('.btn-notes').forEach(btn=>{
+    btn.addEventListener('click', ()=> editNotes(btn.dataset.filename));
+  });
+}
+
+function renderStats(){
+  const byClinic = {};
+  const byService = {};
+  allEntries.forEach(e=>{
+    const c = e.clinic || '—';
+    const s = e.service || '—';
+    byClinic[c] = byClinic[c] || { total:0, usados:0 };
+    byClinic[c].total++;
+    if(e.status === 'utilizado') byClinic[c].usados++;
+    byService[s] = byService[s] || { total:0, usados:0 };
+    byService[s].total++;
+    if(e.status === 'utilizado') byService[s].usados++;
+  });
+
+  const rowsFrom = (obj) => Object.entries(obj)
+    .sort((a,b)=> b[1].total - a[1].total)
+    .map(([k,v]) => `<tr><td>${escapeHtml(k)}</td><td>${v.total}</td><td>${v.usados}</td></tr>`)
+    .join('') || '<tr><td colspan="3" style="opacity:.5">Sem dados</td></tr>';
+
+  document.getElementById('stats-clinic').innerHTML = rowsFrom(byClinic);
+  document.getElementById('stats-service').innerHTML = rowsFrom(byService);
+}
+
+function formatDateDisplay(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function getToken(){
+  const token = document.getElementById('gh-token').value.trim();
+  if(!token){
+    alert('Cola o teu token de acesso do GitHub no campo acima primeiro.');
+    return null;
+  }
+  const remember = document.getElementById('gh-remember').checked;
+  if(remember) localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  else localStorage.removeItem(TOKEN_STORAGE_KEY);
+  return token;
+}
+
+async function readRegistryEntries(token){
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(currentClinicId)}`;
+  const res = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+  });
+  if(!res.ok) throw new Error(`Não consegui ler o registo (HTTP ${res.status}).`);
+  const file = await res.json();
+  const binary = atob(file.content.replace(/\n/g,''));
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  const entries = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+  return { entries, sha: file.sha };
+}
+
+async function writeRegistryEntries(token, entries, sha, message){
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(currentClinicId)}`;
+  const res = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message, content: utf8ToBase64(JSON.stringify(entries, null, 2)), branch: GH_BRANCH, sha
+    })
+  });
+  if(!res.ok){
+    const errBody = await res.json().catch(()=>({}));
+    throw new Error(errBody.message || `HTTP ${res.status}`);
+  }
+}
+
+async function markAsUsed(filename, btnEl){
+  const token = getToken();
+  if(!token) return;
+
+  btnEl.disabled = true;
+  btnEl.textContent = 'A gravar...';
+
+  try{
+    const { entries, sha } = await readRegistryEntries(token);
+    const idx = entries.findIndex(e => e.filename === filename);
+    if(idx === -1) throw new Error('Vale não encontrado no registo (pode ter sido atualizado entretanto).');
+
+    entries[idx].status = 'utilizado';
+    entries[idx].usedDate = new Date().toLocaleDateString('pt-PT');
+
+    await writeRegistryEntries(token, entries, sha, `Marca vale como utilizado: ${filename}`);
+    allEntries = entries;
+    render();
+  } catch(err){
+    alert('Não foi possível marcar como utilizado: ' + err.message);
+    btnEl.disabled = false;
+    btnEl.textContent = 'Marcar utilizado';
+  }
+}
+
+/* ================================================================
+   AGENDAMENTO — modal, link do WhatsApp e link "adicionar ao
+   calendário" (Google Calendar).
+   ================================================================ */
+let scheduleTargetFilename = null;
+
+function openScheduleModal(filename){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry) return;
+  scheduleTargetFilename = filename;
+
+  const isReschedule = entry.status === 'agendado';
+  document.getElementById('modal-title').textContent = isReschedule ? 'Reagendar consulta' : 'Agendar consulta';
+  document.getElementById('modal-sub').textContent =
+    `${entry.to || 'Paciente'} · Vale ${entry.voucherNumber || ''} · ${entry.service || ''}`;
+  document.getElementById('m-date').value = entry.appointmentDateIso || '';
+  document.getElementById('m-time').value = entry.appointmentTime || '10:00';
+  document.getElementById('m-phone').value = entry.patientPhone || '';
+  document.getElementById('modal-error').textContent = '';
+  document.getElementById('modal-confirm').textContent = isReschedule ? 'Confirmar novo horário' : 'Confirmar agendamento';
+  document.getElementById('schedule-modal').classList.add('open');
+}
+
+function closeScheduleModal(){
+  document.getElementById('schedule-modal').classList.remove('open');
+  scheduleTargetFilename = null;
+}
+
+document.getElementById('modal-cancel').addEventListener('click', closeScheduleModal);
+document.getElementById('schedule-modal').addEventListener('click', (e)=>{
+  if(e.target.id === 'schedule-modal') closeScheduleModal();
+});
+
+/* Normaliza o número para o formato internacional que o wa.me precisa
+   (só dígitos, com indicativo). Assume Portugal (+351) se vierem
+   9 dígitos sem indicativo. */
+function normalizePhone(raw){
+  let digits = raw.replace(/[^\d+]/g,'');
+  digits = digits.replace(/^\+/, '');
+  if(digits.length === 9) digits = '351' + digits;
+  return digits;
+}
+
+function buildCalendarLink(entry, startIso, endIso){
+  const fmt = (iso) => iso.replace(/[-:]/g,'').split('.')[0];
+  const text = encodeURIComponent(entry.service || 'Consulta');
+  const details = encodeURIComponent(`Vale nº ${entry.voucherNumber || ''} — ${entry.service || ''}`);
+  const location = encodeURIComponent(entry.clinic || '');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${fmt(startIso)}/${fmt(endIso)}&details=${details}&location=${location}&ctz=Europe/Lisbon`;
+}
+
+function buildWhatsAppMessage(entry){
+  const isPediatric = /pediátric/i.test(entry.service || '');
+  const details = [
+    `📋 Vale nº ${entry.voucherNumber || ''}`,
+    `📍 Local: ${entry.clinic || ''}`,
+    `🗓️ Data: ${formatDateDisplay(entry.appointmentDateIso)} às ${entry.appointmentTime || ''}`
+  ];
+
+  let lines;
+  if(isPediatric){
+    lines = [
+      'Olá! 🌿',
+      `A ${entry.service ? entry.service.charAt(0).toLowerCase() + entry.service.slice(1) : 'consulta'} de ${entry.to || 'o(a) vosso(a) filho(a)'} está confirmada:`,
+      '',
+      ...details,
+      '',
+      'Se a criança apresentar sintomas de mal-estar, febre ou qualquer indisposição perto da data, pedimos que remarquem a consulta — a prioridade é sempre o bem-estar dela.',
+      '',
+      'Para qualquer outro imprevisto, pedimos aviso com pelo menos 48h de antecedência.',
+      '',
+      `Adicionar ao calendário: ${entry.calendarLink || ''}`,
+      '',
+      'Até breve! 💛'
+    ];
+  } else {
+    lines = [
+      `Olá ${entry.to || ''}! 🌿`,
+      `A tua ${entry.service ? entry.service.charAt(0).toLowerCase() + entry.service.slice(1) : 'consulta'} está confirmada:`,
+      '',
+      ...details,
+      '',
+      'Se não puderes comparecer ou surgir algum imprevisto, pedimos que avises com pelo menos 48h de antecedência.',
+      '',
+      `Adicionar ao calendário: ${entry.calendarLink || ''}`,
+      '',
+      'Até breve! 💛'
+    ];
+  }
+  return lines.join('\n');
+}
+
+document.getElementById('modal-confirm').addEventListener('click', async ()=>{
+  const errorEl = document.getElementById('modal-error');
+  errorEl.textContent = '';
+
+  const filename = scheduleTargetFilename;
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry) return;
+
+  const dateIso = document.getElementById('m-date').value;
+  const time = document.getElementById('m-time').value;
+  const phoneRaw = document.getElementById('m-phone').value.trim();
+
+  if(!dateIso){ errorEl.textContent = 'Escolhe a data da consulta.'; return; }
+  if(!time){ errorEl.textContent = 'Escolhe a hora da consulta.'; return; }
+  if(!phoneRaw){ errorEl.textContent = 'Indica o telemóvel do paciente.'; return; }
+
+  const token = getToken();
+  if(!token) return;
+
+  const confirmBtn = document.getElementById('modal-confirm');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'A gravar...';
+
+  try{
+    const durationMin = entry.duration ? parseInt(entry.duration, 10) || 45 : 45;
+    const start = new Date(`${dateIso}T${time}:00`);
+    const end = new Date(start.getTime() + durationMin * 60000);
+    const startIso = start.toISOString();
+    const endIso = end.toISOString();
+
+    const { entries, sha } = await readRegistryEntries(token);
+    const idx = entries.findIndex(e => e.filename === filename);
+    if(idx === -1) throw new Error('Vale não encontrado no registo.');
+
+    entries[idx].status = 'agendado';
+    entries[idx].appointmentDateIso = dateIso;
+    entries[idx].appointmentTime = time;
+    entries[idx].patientPhone = normalizePhone(phoneRaw);
+    entries[idx].calendarLink = buildCalendarLink(entries[idx], startIso, endIso);
+
+    await writeRegistryEntries(token, entries, sha, `Agenda vale: ${filename}`);
+    allEntries = entries;
+    closeScheduleModal();
+    render();
+  } catch(err){
+    errorEl.textContent = 'Não foi possível gravar: ' + err.message;
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Confirmar agendamento';
+  }
+});
+
+function sendWhatsApp(filename){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry || !entry.patientPhone){
+    alert('Este vale ainda não tem número de telemóvel guardado.');
+    return;
+  }
+  const message = encodeURIComponent(buildWhatsAppMessage(entry));
+  window.open(`https://wa.me/${entry.patientPhone}?text=${message}`, '_blank');
+}
+
+function buildReminderMessage(entry){
+  const isPediatric = /pediátric/i.test(entry.service || '');
+  const who = isPediatric ? (entry.to || 'o(a) vosso(a) filho(a)') : (entry.to || '');
+  const lines = [
+    `Olá! 🌿 Só a lembrar: a consulta de ${who} é já ${formatDateDisplay(entry.appointmentDateIso)} às ${entry.appointmentTime || ''}, em ${entry.clinic || ''}.`,
+    '',
+    isPediatric
+      ? 'Se a criança não estiver bem (febre, mal-estar), pedimos que remarquem.'
+      : 'Se não puderes comparecer, pedimos aviso com 48h de antecedência.',
+    '',
+    'Até já! 💛'
+  ];
+  return lines.join('\n');
+}
+
+function sendReminder(filename){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry || !entry.patientPhone){
+    alert('Este vale ainda não tem número de telemóvel guardado.');
+    return;
+  }
+  const message = encodeURIComponent(buildReminderMessage(entry));
+  window.open(`https://wa.me/${entry.patientPhone}?text=${message}`, '_blank');
+}
+
+async function copyMessage(filename, btnEl){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry) return;
+  const message = buildWhatsAppMessage(entry);
+  try{
+    await navigator.clipboard.writeText(message);
+    const original = btnEl.textContent;
+    btnEl.textContent = 'Copiado!';
+    setTimeout(()=> btnEl.textContent = original, 1500);
+  } catch(e){
+    // fallback: mostra a mensagem para copiar à mão
+    window.prompt('Copia a mensagem abaixo:', message);
+  }
+}
+
+async function cancelVoucher(filename, btnEl){
+  if(!confirm('Marcar este vale como cancelado? Pode reverter mais tarde diretamente no registo, se for preciso.')) return;
+  const token = getToken();
+  if(!token) return;
+
+  btnEl.disabled = true;
+  try{
+    const { entries, sha } = await readRegistryEntries(token);
+    const idx = entries.findIndex(e => e.filename === filename);
+    if(idx === -1) throw new Error('Vale não encontrado no registo.');
+    entries[idx].status = 'cancelado';
+    entries[idx].cancelledAt = new Date().toISOString();
+    await writeRegistryEntries(token, entries, sha, `Cancela vale: ${filename}`);
+    allEntries = entries;
+    render();
+  } catch(err){
+    alert('Não foi possível cancelar: ' + err.message);
+    btnEl.disabled = false;
+  }
+}
+
+async function editNotes(filename){
+  const entry = allEntries.find(e => e.filename === filename);
+  if(!entry) return;
+  const newNotes = window.prompt('Notas internas para este vale:', entry.notes || '');
+  if(newNotes === null) return; // cancelado
+
+  const token = getToken();
+  if(!token) return;
+
+  try{
+    const { entries, sha } = await readRegistryEntries(token);
+    const idx = entries.findIndex(e => e.filename === filename);
+    if(idx === -1) throw new Error('Vale não encontrado no registo.');
+    entries[idx].notes = newNotes;
+    await writeRegistryEntries(token, entries, sha, `Atualiza notas: ${filename}`);
+    allEntries = entries;
+    render();
+  } catch(err){
+    alert('Não foi possível guardar as notas: ' + err.message);
+  }
+}
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.filter;
+    render();
+  });
+});
+
+let searchDebounce;
+document.getElementById('search-input').addEventListener('input', (e)=>{
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(()=>{
+    searchTerm = e.target.value.trim();
+    render();
+  }, 200);
+});
+
+document.getElementById('stats-toggle').addEventListener('click', ()=>{
+  const panel = document.getElementById('stats-panel');
+  panel.classList.toggle('open');
+  document.getElementById('stats-toggle').textContent =
+    panel.classList.contains('open') ? '- Ver estatísticas por clínica/serviço' : '+ Ver estatísticas por clínica/serviço';
+});
+
+const savedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+if(savedToken) document.getElementById('gh-token').value = savedToken;
+
+/* ================================================================
+   CONFIGURAÇÕES — Tipos de Consulta, Clínicas, Terapeutas, Validade
+   Tudo gravado em Vouchers/data/config.json. Edição por perguntas
+   sequenciais (prompt), simples e sem precisar de formulários novos.
+   ================================================================ */
+
+document.getElementById('tab-vales').addEventListener('click', ()=> switchView('vales'));
+document.getElementById('tab-config').addEventListener('click', ()=> switchView('config'));
+
+function switchView(view){
+  document.getElementById('vales-view').style.display = view === 'vales' ? '' : 'none';
+  document.getElementById('config-view').style.display = view === 'config' ? '' : 'none';
+  document.getElementById('tab-vales').classList.toggle('active', view === 'vales');
+  document.getElementById('tab-config').classList.toggle('active', view === 'config');
+  if(view === 'config' && !appConfig) loadConfig();
+}
+
+function getCfgToken(){
+  const token = document.getElementById('cfg-gh-token').value.trim();
+  if(!token){
+    alert('Cola o teu token de acesso do GitHub no campo acima primeiro.');
+    return null;
+  }
+  const remember = document.getElementById('cfg-gh-remember').checked;
+  if(remember) localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  else localStorage.removeItem(TOKEN_STORAGE_KEY);
+  return token;
+}
+
+async function loadConfig(){
+  ['services','clinics','therapists','validityOptions'].forEach(k=>{
+    document.getElementById('list-' + k).innerHTML = '<div class="config-empty">A carregar...</div>';
+  });
+  try{
+    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${CONFIG_PATH}?t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if(res.status === 404){
+      appConfig = { ...DEFAULT_CONFIG };
+      appConfigSha = null;
+    } else if(!res.ok){
+      throw new Error(`HTTP ${res.status}`);
+    } else {
+      appConfig = await res.json();
+      appConfigSha = null; // sha só é lido/necessário no momento de gravar (via API, com token)
+    }
+  } catch(err){
+    appConfig = { ...DEFAULT_CONFIG };
+    console.error('Falha ao carregar config.json:', err);
+  }
+  renderConfigLists();
+}
+
+function renderConfigLists(){
+  renderConfigList('services', appConfig.services, (item) =>
+    `<div class="config-item-info"><b>${escapeHtml(item.label)}</b><div class="sub">${escapeHtml(item.professionalTitle || '')} · ${escapeHtml(item.duration || '')}</div></div>`
+  );
+  renderConfigList('clinics', appConfig.clinics, (item) =>
+    `<div class="config-item-info" style="display:flex; align-items:center; gap:.8rem;">
+       <img src="${item.logo || FALLBACK_LOGO_THUMB}" alt="" style="width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; border:1px solid var(--sky);">
+       <span><b>${escapeHtml(item.name)}</b><div class="sub">${escapeHtml(item.address || '')}${item.logo ? '' : ' · sem logótipo próprio (usa o da Joana)'}</div></span>
+     </div>`
+  );
+  renderConfigList('therapists', appConfig.therapists, (item) => {
+    const clinicNames = (item.clinics || [])
+      .map(id => appConfig.clinics.find(c => c.id === id))
+      .filter(Boolean).map(c => c.name).join(', ') || 'sem clínica atribuída';
+    const specialtyNames = (item.specialties || [])
+      .map(id => appConfig.services.find(s => s.id === id))
+      .filter(Boolean).map(s => s.label).join(', ') || 'sem especialidade atribuída';
+    return `<div class="config-item-info"><b>${escapeHtml(item.name)}</b><div class="sub">${escapeHtml(clinicNames)}<br>${escapeHtml(specialtyNames)}</div></div>`;
+  });
+  renderConfigList('validityOptions', appConfig.validityOptions, (item) =>
+    `<div class="config-item-info">${escapeHtml(item)}</div>`, true
+  );
+}
+
+const FALLBACK_LOGO_THUMB = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#B9CDCB"/></svg>`
+);
+
+function renderConfigList(entity, items, renderInfo, isPlainStrings){
+  const container = document.getElementById('list-' + entity);
+  if(!items || items.length === 0){
+    container.innerHTML = '<div class="config-empty">Nada configurado ainda.</div>';
+    return;
+  }
+  container.innerHTML = items.map((item, idx) => {
+    const inactive = !isPlainStrings && item.active === false;
+    let actions = `<button class="btn-edit" data-entity="${entity}" data-idx="${idx}">Editar</button>`;
+    if(entity === 'clinics'){
+      actions += `<button class="btn-logo" data-entity="${entity}" data-idx="${idx}">Logótipo</button>`;
+    }
+    if(!isPlainStrings){
+      actions += `<button class="btn-toggle" data-entity="${entity}" data-idx="${idx}">${inactive ? 'Ativar' : 'Desativar'}</button>`;
+    }
+    actions += `<button class="danger btn-remove" data-entity="${entity}" data-idx="${idx}">Remover</button>`;
+    return `<div class="config-item ${inactive ? 'inactive' : ''}">${renderInfo(item)}<div class="config-item-actions">${actions}</div></div>`;
+  }).join('');
+
+  container.querySelectorAll('.btn-edit').forEach(btn=>{
+    btn.addEventListener('click', ()=> editConfigItem(btn.dataset.entity, parseInt(btn.dataset.idx)));
+  });
+  container.querySelectorAll('.btn-logo').forEach(btn=>{
+    btn.addEventListener('click', ()=> uploadClinicLogo(parseInt(btn.dataset.idx)));
+  });
+  container.querySelectorAll('.btn-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=> toggleConfigItem(btn.dataset.entity, parseInt(btn.dataset.idx)));
+  });
+  container.querySelectorAll('.btn-remove').forEach(btn=>{
+    btn.addEventListener('click', ()=> removeConfigItem(btn.dataset.entity, parseInt(btn.dataset.idx)));
+  });
+}
+
+function uploadClinicLogo(idx){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/png,image/jpeg,image/webp,image/svg+xml';
+  input.addEventListener('change', ()=>{
+    const file = input.files[0];
+    if(!file) return;
+    if(file.size > 1.5 * 1024 * 1024){
+      alert('Imagem grande demais — usa um ficheiro até 1,5 MB (idealmente um PNG quadrado com fundo transparente).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      appConfig.clinics[idx].logo = reader.result; // já vem como data:...;base64,...
+      saveConfigAndRender();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.click();
+}
+
+const ENTITY_SCHEMA = {
+  services: {
+    title: 'Tipo de consulta',
+    fields: [
+      { key:'label', label:'Nome curto (aparece no dropdown do gerador)', type:'text', placeholder:'Osteopatia Pediátrica' },
+      { key:'title', label:'Título completo (aparece no vale)', type:'text', placeholder:'Consulta de Osteopatia Pediátrica' },
+      { key:'professionalTitle', label:'Como se chama o profissional', type:'text', placeholder:'Osteopata, Podologista, Fisioterapeuta...' },
+      { key:'description', label:'Descrição (texto do vale)', type:'textarea' },
+      { key:'duration', label:'Duração', type:'text', placeholder:'45 minutos' },
+      { key:'recommendedAge', label:'Recomendado para', type:'text', placeholder:'0–12 anos / Adultos' }
+    ]
+  },
+  clinics: {
+    title: 'Clínica',
+    fields: [
+      { key:'name', label:'Nome da clínica', type:'text' },
+      { key:'address', label:'Morada', type:'text' },
+      { key:'mapEmbedUrl', label:'Link do mapa (Google Maps, com "output=embed")', type:'text' },
+      { key:'directionsUrl', label:'Link "Como chegar"', type:'text' },
+      { key:'bookingUrl', label:'WhatsApp/link de marcação (opcional)', type:'text', placeholder:'https://wa.me/351...' }
+    ]
+  },
+  therapists: {
+    title: 'Profissional',
+    fields: [
+      { key:'name', label:'Nome do profissional', type:'text' },
+      { key:'clinics', label:'Em que clínicas trabalha (podes escolher mais do que uma)', type:'chips', source:'clinics', sourceKey:'name' },
+      { key:'specialties', label:'Especialidades (pode ter mais do que uma função)', type:'chips', source:'services', sourceKey:'label' }
+    ]
+  }
+};
+
+function slugifyId(str){
+  return String(str).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || ('item-' + Date.now());
+}
+
+// escapeHtml() não escapa aspas — seguro para conteúdo de texto, mas não
+// para dentro de atributos (value="...", placeholder="..."). Esta variante
+// escapa também as aspas, para os casos em que injetamos valores guardados
+// dentro de atributos HTML (ex: moradas ou descrições com aspas).
+function escapeAttr(str){
+  return escapeHtml(str).replace(/"/g, '&quot;');
+}
+
+/* ================================================================
+   MODAL DE EDIÇÃO — mostra todos os campos de uma vez, com chips
+   clicáveis para seleção múltipla (clínicas / especialidades).
+   ================================================================ */
+let modalState = { entity: null, idx: null, chipSelections: {} };
+
+function renderEntityField(field, existing){
+  if(field.type === 'chips'){
+    const sourceItems = appConfig[field.source] || [];
+    const selected = new Set(existing ? (existing[field.key] || []) : []);
+    modalState.chipSelections[field.key] = selected;
+    if(sourceItems.length === 0){
+      return `<div class="field-block">
+        <label>${escapeHtml(field.label)}</label>
+        <div class="chip-empty">Ainda não há nada configurado em "${field.source === 'clinics' ? 'Clínicas' : 'Tipos de Consulta'}".</div>
+      </div>`;
+    }
+    const chips = sourceItems.map(item => {
+      const isSelected = selected.has(item.id);
+      return `<span class="chip-option${isSelected ? ' selected' : ''}" data-field="${field.key}" data-id="${item.id}">${escapeHtml(item[field.sourceKey])}</span>`;
+    }).join('');
+    return `<div class="field-block">
+      <label>${escapeHtml(field.label)}</label>
+      <div class="chip-group" data-chip-group="${field.key}">${chips}</div>
+    </div>`;
+  }
+
+  const value = existing ? (existing[field.key] || '') : '';
+  const placeholder = field.placeholder ? ` placeholder="${escapeAttr(field.placeholder)}"` : '';
+  if(field.type === 'textarea'){
+    return `<div class="field-block">
+      <label for="ef-${field.key}">${escapeHtml(field.label)}</label>
+      <textarea id="ef-${field.key}" data-field="${field.key}"${placeholder}>${escapeHtml(value)}</textarea>
+    </div>`;
+  }
+  return `<div class="field-block">
+    <label for="ef-${field.key}">${escapeHtml(field.label)}</label>
+    <input type="text" id="ef-${field.key}" data-field="${field.key}" value="${escapeAttr(value)}"${placeholder}>
+  </div>`;
+}
+
+function openEntityModal(entity, idx){
+  const schema = ENTITY_SCHEMA[entity];
+  const existing = (idx != null) ? appConfig[entity][idx] : null;
+  modalState = { entity, idx, chipSelections: {} };
+
+  document.getElementById('entity-modal-title').textContent =
+    (existing ? 'Editar ' : 'Novo/a ') + schema.title.toLowerCase();
+  document.getElementById('entity-modal-sub').textContent =
+    existing ? `A editar: ${existing.name || existing.label}` : `A criar um/a novo/a ${schema.title.toLowerCase()}`;
+
+  const fieldsHtml = schema.fields.map(f => renderEntityField(f, existing)).join('');
+  document.getElementById('entity-modal-fields').innerHTML = fieldsHtml;
+  document.getElementById('entity-modal-error').textContent = '';
+
+  // liga o clique dos chips (alterna seleção)
+  document.querySelectorAll('#entity-modal-fields .chip-option').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const fieldKey = chip.dataset.field;
+      const id = chip.dataset.id;
+      const set = modalState.chipSelections[fieldKey];
+      if(set.has(id)){ set.delete(id); chip.classList.remove('selected'); }
+      else { set.add(id); chip.classList.add('selected'); }
+    });
+  });
+
+  document.getElementById('entity-modal').classList.add('open');
+}
+
+function closeEntityModal(){
+  document.getElementById('entity-modal').classList.remove('open');
+}
+
+function saveEntityModal(){
+  const { entity, idx } = modalState;
+  const schema = ENTITY_SCHEMA[entity];
+  const data = {};
+
+  for(const field of schema.fields){
+    if(field.type === 'chips'){
+      data[field.key] = Array.from(modalState.chipSelections[field.key] || []);
+    } else {
+      const el = document.getElementById(`ef-${field.key}`);
+      data[field.key] = el ? el.value.trim() : '';
+    }
+  }
+
+  // validação mínima: precisa de um nome/label preenchido
+  const nameLike = data.name || data.label;
+  if(!nameLike){
+    document.getElementById('entity-modal-error').textContent = 'Preenche pelo menos o nome.';
+    return;
+  }
+
+  if(idx != null){
+    const existing = appConfig[entity][idx];
+    data.id = existing.id;
+    data.active = existing.active;
+    appConfig[entity][idx] = data;
+  } else {
+    data.id = slugifyId(nameLike);
+    data.active = true;
+    appConfig[entity].push(data);
+  }
+
+  closeEntityModal();
+  saveConfigAndRender();
+}
+
+document.getElementById('entity-modal-cancel').addEventListener('click', closeEntityModal);
+document.getElementById('entity-modal-save').addEventListener('click', saveEntityModal);
+document.getElementById('entity-modal').addEventListener('click', (e)=>{
+  if(e.target.id === 'entity-modal') closeEntityModal();
+});
+
+function addConfigItem(entity){
+  if(entity === 'validityOptions'){
+    const value = window.prompt('Novo texto de validade (ex: "3 meses após emissão"):', '');
+    if(value === null || !value.trim()) return;
+    appConfig.validityOptions.push(value.trim());
+    saveConfigAndRender();
+    return;
+  }
+  openEntityModal(entity, null);
+}
+
+function editConfigItem(entity, idx){
+  if(entity === 'validityOptions'){
+    const current = appConfig.validityOptions[idx];
+    const value = window.prompt('Editar texto de validade:', current);
+    if(value === null || !value.trim()) return;
+    appConfig.validityOptions[idx] = value.trim();
+    saveConfigAndRender();
+    return;
+  }
+  openEntityModal(entity, idx);
+}
+
+
+function toggleConfigItem(entity, idx){
+  appConfig[entity][idx].active = appConfig[entity][idx].active === false ? true : false;
+  saveConfigAndRender();
+}
+
+function removeConfigItem(entity, idx){
+  const label = entity === 'validityOptions' ? appConfig[entity][idx] : (appConfig[entity][idx].name || appConfig[entity][idx].label);
+  if(!confirm(`Remover "${label}"? Esta ação não pode ser desfeita.`)) return;
+  appConfig[entity].splice(idx, 1);
+  saveConfigAndRender();
+}
+
+async function saveConfigAndRender(){
+  renderConfigLists(); // otimista: mostra já a alteração
+  if(typeof renderClinicContext === 'function' && document.getElementById('clinic-context')){
+    renderClinicContext();
+  }
+  const token = getCfgToken();
+  if(!token){
+    alert('A alteração não foi gravada — cola o token do GitHub e tenta novamente.');
+    return;
+  }
+  try{
+    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_PATH}`;
+    let sha = null;
+    const getRes = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if(getRes.status === 200){
+      const file = await getRes.json();
+      sha = file.sha;
+    } else if(getRes.status !== 404){
+      throw new Error(`HTTP ${getRes.status}`);
+    }
+
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: 'Atualiza configuração (Vouchers)',
+        content: utf8ToBase64(JSON.stringify(appConfig, null, 2)),
+        branch: GH_BRANCH,
+        sha: sha || undefined
+      })
+    });
+    if(!putRes.ok){
+      const errBody = await putRes.json().catch(()=>({}));
+      throw new Error(errBody.message || `HTTP ${putRes.status}`);
+    }
+  } catch(err){
+    alert('Não foi possível gravar a configuração: ' + err.message);
+  }
+}
+
+document.querySelectorAll('.btn-add').forEach(btn=>{
+  btn.addEventListener('click', ()=> addConfigItem(btn.dataset.entity));
+});
+
+const savedCfgToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+if(savedCfgToken) document.getElementById('cfg-gh-token').value = savedCfgToken;
+
+/* ================================================================
+   ARRANQUE — carrega primeiro o config.json (para saber que clínicas
+   existem), depois decide qual gerir: fixa pelo URL, ou por seleção
+   manual (mostrando um seletor, no caso da página central).
+   ================================================================ */
+function renderClinicContext(){
+  const el = document.getElementById('clinic-context');
+  if(LOCKED_CLINIC_ID){
+    const clinic = appConfig.clinics.find(c => c.id === LOCKED_CLINIC_ID);
+    el.innerHTML = `<span class="locked-badge">Clínica: <b>${escapeHtml(clinic ? clinic.name : LOCKED_CLINIC_ID)}</b></span>`;
+    return;
+  }
+  if(!appConfig.clinics.length){
+    el.innerHTML = `<span class="locked-badge">Nenhuma clínica configurada ainda — cria uma em Configurações.</span>`;
+    return;
+  }
+  const options = appConfig.clinics.map(c =>
+    `<option value="${c.id}" ${c.id === currentClinicId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+  ).join('');
+  el.innerHTML = `<label for="clinic-select">Clínica:</label><select id="clinic-select">${options}</select>`;
+  document.getElementById('clinic-select').addEventListener('change', (e)=>{
+    currentClinicId = e.target.value;
+    loadRegistry();
+  });
+}
+
+async function initManagement(){
+  await loadConfig();
+  const slug = detectClinicSlugFromUrl();
+  if(slug && appConfig.clinics.some(c => c.id === slug)){
+    LOCKED_CLINIC_ID = slug;
+    currentClinicId = slug;
+  } else if(appConfig.clinics.length){
+    currentClinicId = appConfig.clinics[0].id;
+  }
+  renderClinicContext();
+  loadRegistry();
+}
+initManagement();
+</script>
+</body>
+</html>

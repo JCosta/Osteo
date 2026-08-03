@@ -95,6 +95,18 @@
         "pediatric",
         "adult"
       ]
+    },
+    {
+      "name": "Jorge Costa",
+      "clinics": [
+        "clipharma",
+        "reikizen"
+      ],
+      "specialties": [
+        "adult"
+      ],
+      "id": "jorge-costa",
+      "active": true
     }
   ],
   "validityOptions": [

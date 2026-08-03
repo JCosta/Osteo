@@ -138,10 +138,10 @@
       <input type="text" id="f-number" placeholder="AUTO">
 
       <label for="f-therapist">Terapeuta</label>
-      <input type="text" id="f-therapist" value="Joana Teixeira">
+      <select id="f-therapist"></select>
 
       <label for="f-validity">Texto de validade</label>
-      <input type="text" id="f-validity" value="3 meses após emissão">
+      <select id="f-validity"></select>
     </div>
 
     <div class="filename-preview">Ficheiro: <b id="filename-out">—</b></div>
@@ -195,32 +195,74 @@ function decodeTemplate(){
 }
 const RAW_TEMPLATE = decodeTemplate();
 
+const GH_OWNER = 'JCosta';
+const GH_REPO = 'Osteo';
+const GH_BRANCH = 'main';
+const GH_FOLDER = 'Vouchers/generated';
+const GH_PAGES_BASE = 'https://osteo.bistrobit.fyi';
+const TOKEN_STORAGE_KEY = 'voucherGenerator_ghToken';
+
+
 /* ================================================================
-   TIPOS DE CONSULTA — acrescenta aqui se precisares de mais um dia.
+   CONFIGURAÇÃO (Tipos de Consulta, Clínicas, Terapeutas, Validade)
+   — carregada de Vouchers/data/config.json (editável na página de
+   Gestão, sem tocar neste ficheiro). Os valores abaixo são só uma
+   reserva, usada caso o config.json ainda não exista no repositório.
    ================================================================ */
-const SERVICES = [
-  {
-    id: 'pediatric',
-    label: 'Osteopatia Pediátrica',
-    title: 'Consulta de Osteopatia Pediátrica',
-    description: 'Um momento de escuta e cuidado só para o teu pequeno tesouro. Mãos calmas, atenção total, e todo o carinho que um bebé merece.',
-    duration: '45 minutos',
-    recommendedAge: '0–12 anos'
-  },
-  {
-    id: 'adult',
-    label: 'Osteopatia para Adultos',
-    title: 'Consulta de Osteopatia para Adultos',
-    description: 'Um momento só para ti — para aliviar tensões, recuperar mobilidade e devolver equilíbrio ao corpo. Cuidado profissional, com toda a atenção que mereces.',
-    duration: '50 minutos',
-    recommendedAge: 'Adultos'
+const CONFIG_PATH = 'Vouchers/data/config.json';
+const FALLBACK_CONFIG = {
+  services: [
+    {
+      id: 'pediatric', label: 'Osteopatia Pediátrica',
+      title: 'Consulta de Osteopatia Pediátrica',
+      description: 'Um momento de escuta e cuidado só para o teu pequeno tesouro. Mãos calmas, atenção total, e todo o carinho que um bebé merece.',
+      duration: '45 minutos', recommendedAge: '0–12 anos', active: true
+    },
+    {
+      id: 'adult', label: 'Osteopatia para Adultos',
+      title: 'Consulta de Osteopatia para Adultos',
+      description: 'Um momento só para ti — para aliviar tensões, recuperar mobilidade e devolver equilíbrio ao corpo. Cuidado profissional, com toda a atenção que mereces.',
+      duration: '50 minutos', recommendedAge: 'Adultos', active: true
+    }
+  ],
+  clinics: [
+    {
+      id: 'reikizen', name: 'Escola Reikizen', address: 'R. Amália Rodrigues, 4715-213 Braga',
+      mapEmbedUrl: 'https://www.google.com/maps?q=Escola+Reikizen+Braga&output=embed',
+      directionsUrl: 'https://maps.app.goo.gl/24U3AdtvhUe2Kj1T9',
+      bookingUrl: 'https://wa.me/351964222510', active: true
+    }
+  ],
+  therapists: [
+    { id: 'joana-teixeira', name: 'Joana Teixeira', active: true }
+  ],
+  validityOptions: ['3 meses após emissão', '6 meses após emissão']
+};
+
+let APP_CONFIG = FALLBACK_CONFIG;
+
+async function loadAppConfig(){
+  try{
+    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${CONFIG_PATH}?t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if(res.ok){
+      const data = await res.json();
+      APP_CONFIG = {
+        services: data.services?.length ? data.services : FALLBACK_CONFIG.services,
+        clinics: data.clinics?.length ? data.clinics : FALLBACK_CONFIG.clinics,
+        therapists: data.therapists?.length ? data.therapists : FALLBACK_CONFIG.therapists,
+        validityOptions: data.validityOptions?.length ? data.validityOptions : FALLBACK_CONFIG.validityOptions
+      };
+    }
+  } catch(e){
+    console.warn('Não consegui carregar config.json, a usar valores de reserva.', e);
   }
-];
+}
 
 function populateServiceDropdown(){
   const select = document.getElementById('f-service');
   select.innerHTML = '';
-  SERVICES.forEach(s=>{
+  APP_CONFIG.services.filter(s => s.active !== false).forEach(s=>{
     const opt = document.createElement('option');
     opt.value = s.id;
     opt.textContent = s.label;
@@ -230,91 +272,48 @@ function populateServiceDropdown(){
 
 function getSelectedService(){
   const id = document.getElementById('f-service').value;
-  return SERVICES.find(s => s.id === id) || SERVICES[0];
+  return APP_CONFIG.services.find(s => s.id === id) || APP_CONFIG.services[0];
 }
-
-/* ================================================================
-   CLÍNICAS — edita/acrescenta aqui sempre que precisares de mais uma.
-   Cada clínica precisa de: id, name, address, mapEmbedUrl, directionsUrl.
-   bookingUrl é opcional — deixa "" se não houver contacto direto de
-   marcação (o botão "Marcar consulta" simplesmente não aparece no vale).
-   active: false deixa a clínica configurada mas não selecionável
-   (aparece "(brevemente)" e fica desativada no dropdown).
-   ================================================================ */
-const CLINICS = [
-  {
-    id: 'reikizen',
-    name: 'Escola Reikizen',
-    address: 'R. Amália Rodrigues, 4715-213 Braga',
-    mapEmbedUrl: 'https://www.google.com/maps?q=Escola+Reikizen+Braga&output=embed',
-    directionsUrl: 'https://maps.app.goo.gl/24U3AdtvhUe2Kj1T9',
-    bookingUrl: 'https://wa.me/351964222510',
-    active: true
-  },
-  {
-    id: 'casulo',
-    name: 'Casulo by Vanessa Pinheiro - Centro Materno-infantil e Pilates Clínico',
-    address: 'Av. Dr. António Ribeiro Guimarães 835 R/C, 4730-715 Vila Verde',
-    mapEmbedUrl: 'https://www.google.com/maps?q=Casulo+by+Vanessa+Pinheiro+Vila+Verde&output=embed',
-    directionsUrl: 'https://www.google.com/maps/search/?api=1&query=Casulo+by+Vanessa+Pinheiro+Av.+Dr.+Ant%C3%B3nio+Ribeiro+Guimar%C3%A3es+835+Vila+Verde',
-    bookingUrl: 'https://wa.me/351928104022',
-    active: false
-  },
-  {
-    id: 'clibrito',
-    name: 'Clibrito - Clínica Médica e Dentária',
-    address: 'Rua das Escolas Primárias, Bloco 3 R/C Direito, Guimarães 4580-020',
-    mapEmbedUrl: 'https://www.google.com/maps?q=Clibrito+Cl%C3%ADnica+M%C3%A9dica+e+Dent%C3%A1ria+Guimar%C3%A3es&output=embed',
-    directionsUrl: 'https://www.google.com/maps/search/?api=1&query=Clibrito+Cl%C3%ADnica+M%C3%A9dica+e+Dent%C3%A1ria+Guimar%C3%A3es',
-    bookingUrl: 'https://wa.me/351253725210',
-    active: false
-  },
-  {
-    id: 'clipharma',
-    name: 'Clipharma - Espaço De Saúde',
-    address: 'Av. dos Bombeiros Voluntários, 4830-550 Póvoa de Lanhoso',
-    mapEmbedUrl: 'https://www.google.com/maps?q=Clipharma+Espa%C3%A7o+De+Saude+P%C3%B3voa+de+Lanhoso&output=embed',
-    directionsUrl: 'https://www.google.com/maps/search/?api=1&query=Clipharma+Espa%C3%A7o+De+Saude+P%C3%B3voa+de+Lanhoso',
-    bookingUrl: '', // sem contacto direto disponível — o botão "Marcar consulta" não aparece
-    active: false
-  },
-  {
-    id: 'marclinic',
-    name: 'Mar Clinic',
-    address: 'Av. da Praia, Largo Senhora da Guia n° 7 Apúlia, 4740-035 Esposende',
-    mapEmbedUrl: 'https://www.google.com/maps?q=Mar+Clinic+Ap%C3%BAlia+Esposende&output=embed',
-    directionsUrl: 'https://www.google.com/maps/search/?api=1&query=Mar+Clinic+Ap%C3%BAlia+Esposende',
-    bookingUrl: 'https://wa.me/351913811441',
-    active: false
-  },
-  {
-    id: 'saluslive',
-    name: 'SalusLive - Centro Pediátrico',
-    address: 'R. dos Limoeiros 4, 4700-710 Braga',
-    mapEmbedUrl: 'https://www.google.com/maps?q=SalusLive+Centro+Pedi%C3%A1trico+Braga&output=embed',
-    directionsUrl: 'https://www.google.com/maps/search/?api=1&query=SalusLive+Centro+Pedi%C3%A1trico+Braga',
-    bookingUrl: 'https://wa.me/351253099420',
-    active: false
-  }
-];
 
 function populateClinicDropdown(){
   const select = document.getElementById('f-clinic');
   select.innerHTML = '';
-  CLINICS.forEach(c=>{
+  APP_CONFIG.clinics.forEach(c=>{
     const opt = document.createElement('option');
     opt.value = c.id;
     opt.textContent = c.active ? c.name : `${c.name} (brevemente)`;
     opt.disabled = !c.active;
     select.appendChild(opt);
   });
-  const firstActive = CLINICS.find(c => c.active);
+  const firstActive = APP_CONFIG.clinics.find(c => c.active);
   if(firstActive) select.value = firstActive.id;
 }
 
 function getSelectedClinic(){
   const id = document.getElementById('f-clinic').value;
-  return CLINICS.find(c => c.id === id) || CLINICS.find(c => c.active) || CLINICS[0];
+  return APP_CONFIG.clinics.find(c => c.id === id) || APP_CONFIG.clinics.find(c => c.active) || APP_CONFIG.clinics[0];
+}
+
+function populateTherapistDropdown(){
+  const select = document.getElementById('f-therapist');
+  select.innerHTML = '';
+  APP_CONFIG.therapists.filter(t => t.active !== false).forEach(t=>{
+    const opt = document.createElement('option');
+    opt.value = t.name;
+    opt.textContent = t.name;
+    select.appendChild(opt);
+  });
+}
+
+function populateValidityDropdown(){
+  const select = document.getElementById('f-validity');
+  select.innerHTML = '';
+  APP_CONFIG.validityOptions.forEach(v=>{
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    select.appendChild(opt);
+  });
 }
 
 
@@ -361,6 +360,9 @@ function buildVoucherHTML(data){
   replace('mapEmbedUrl', data.clinic.mapEmbedUrl);
   replace('directionsUrl', data.clinic.directionsUrl);
   replace('bookingUrl', data.clinic.bookingUrl || '');
+  if(data.clinic.logo){
+    replace('logoSrc', data.clinic.logo);
+  }
 
   return html;
 }
@@ -487,21 +489,20 @@ document.getElementById('btn-download').addEventListener('click', async ()=>{
 
 // data de hoje por defeito
 document.getElementById('f-date').valueAsDate = new Date();
-populateServiceDropdown();
-populateClinicDropdown();
-updatePreview();
+(async function initGenerator(){
+  await loadAppConfig();
+  populateServiceDropdown();
+  populateClinicDropdown();
+  populateTherapistDropdown();
+  populateValidityDropdown();
+  updatePreview();
+})();
 
 /* ================================================================
    PUBLICAR NO GITHUB — cria o ficheiro diretamente na pasta
    Vouchers/generated/ do repositório JCosta/Osteo (branch main),
    e devolve o link do GitHub Pages já pronto a partilhar.
    ================================================================ */
-const GH_OWNER = 'JCosta';
-const GH_REPO = 'Osteo';
-const GH_BRANCH = 'main';
-const GH_FOLDER = 'Vouchers/generated';
-const GH_PAGES_BASE = 'https://osteo.bistrobit.fyi';
-const TOKEN_STORAGE_KEY = 'voucherGenerator_ghToken';
 
 function buildFilename(data){
   const toSlug = slugify(data.to || 'vale');
@@ -662,6 +663,8 @@ document.getElementById('btn-publish').addEventListener('click', async ()=>{
         from: data.from,
         service: data.service.title,
         duration: data.service.duration,
+        validityText: data.validity,
+        notes: '',
         clinic: data.clinic.name,
         voucherNumber: voucherNumberText,
         issueDate: data.dateDisplay,

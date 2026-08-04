@@ -63,6 +63,12 @@
     flex:1; max-width:320px; padding:.6rem .9rem; border:1px solid var(--sky); border-radius:999px;
     background:var(--paper); font-size:.85rem; color:var(--sage-dk);
   }
+  #btn-refresh-registry{
+    padding:.6rem 1rem; border:1px solid var(--sky); border-radius:999px; background:var(--paper);
+    color:var(--sage-dk); font-size:.85rem; cursor:pointer; white-space:nowrap;
+  }
+  #btn-refresh-registry:hover{ background:rgba(185,205,203,.25); }
+  #btn-refresh-registry:disabled{ opacity:.6; cursor:not-allowed; }
 
   .token-row{ display:flex; gap:.5rem; align-items:center; font-size:.78rem; }
   .token-row input{
@@ -74,14 +80,17 @@
   table{ width:100%; border-collapse:collapse; background:var(--paper); border-radius:14px; overflow:hidden; }
   thead th{
     text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.08em;
-    padding:.8rem .9rem; background:var(--sage); color:var(--cream);
+    padding:.9rem 1rem; background:var(--sage); color:var(--cream);
   }
-  tbody td{ padding:.8rem .9rem; font-size:.85rem; border-top:1px solid var(--cream); vertical-align:middle; }
-  tbody tr:hover{ background:rgba(185,205,203,.15); }
-  tbody tr.expiring{ background:rgba(192,96,74,.07); }
+  tbody td{ padding:1.15rem 1rem; font-size:.85rem; line-height:1.5; border-top:1px solid var(--sky); vertical-align:top; }
+  tbody tr:first-child td{ border-top:none; }
+  tbody tr:nth-child(even){ background:rgba(185,205,203,.08); }
+  tbody tr:hover{ background:rgba(185,205,203,.2); }
+  tbody tr.expiring{ background:rgba(192,96,74,.08); }
+  tbody tr.expiring:nth-child(even){ background:rgba(192,96,74,.11); }
 
   .pill{
-    display:inline-block; padding:.25rem .7rem; border-radius:999px; font-size:.7rem; font-weight:500;
+    display:inline-block; padding:.3rem .75rem; border-radius:999px; font-size:.7rem; font-weight:500;
   }
   .pill.pendente{ background:rgba(226,152,95,.18); color:#a85f2c; }
   .pill.agendado{ background:rgba(92,127,166,.18); color:#3d5c80; }
@@ -94,10 +103,10 @@
   .notes-preview{ font-size:.78rem; opacity:.75; max-width:140px; display:block;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-  .row-actions{ display:flex; gap:.4rem; flex-wrap:wrap; }
+  .row-actions{ display:flex; flex-direction:column; align-items:flex-start; gap:.45rem; min-width:128px; }
   .row-actions a, .row-actions button{
-    font-size:.72rem; padding:.35rem .7rem; border-radius:999px; border:none; cursor:pointer;
-    text-decoration:none; white-space:nowrap;
+    font-size:.72rem; padding:.4rem .8rem; border-radius:999px; border:none; cursor:pointer;
+    text-decoration:none; white-space:nowrap; width:100%; text-align:center; box-sizing:border-box;
   }
   .row-actions a{ background:var(--sky); color:var(--sage-dk); }
   .row-actions button{ background:var(--sage); color:var(--cream); }
@@ -275,6 +284,7 @@
 
   <div class="search-row">
     <input type="search" id="search-input" placeholder="Pesquisar por nome ou nº de vale...">
+    <button type="button" id="btn-refresh-registry" title="Voltar a carregar o registo (útil se acabaste de publicar um vale)">↻ Atualizar</button>
   </div>
 
   <div class="toolbar">
@@ -944,6 +954,15 @@ document.getElementById('search-input').addEventListener('input', (e)=>{
     searchTerm = e.target.value.trim();
     render();
   }, 200);
+});
+
+document.getElementById('btn-refresh-registry').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btn-refresh-registry');
+  btn.disabled = true;
+  btn.textContent = 'A atualizar...';
+  await loadRegistry();
+  btn.textContent = '↻ Atualizar';
+  btn.disabled = false;
 });
 
 document.getElementById('stats-toggle').addEventListener('click', ()=>{

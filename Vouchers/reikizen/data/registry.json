@@ -75,11 +75,11 @@
     "voucherNumber": "JT-581352",
     "issueDate": "15/08/2026",
     "issueDateIso": "2026-08-15",
-    "status": "pendente",
-    "appointmentDateIso": null,
-    "appointmentTime": null,
-    "patientPhone": null,
-    "calendarLink": null,
+    "status": "agendado",
+    "appointmentDateIso": "2026-08-28",
+    "appointmentTime": "15:30",
+    "patientPhone": "351915582194",
+    "calendarLink": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Consulta%20de%20Osteopatia%20para%20Adultos&dates=20260828T143000/20260828T152000&details=Vale%20n%C2%BA%20JT-581352%20%E2%80%94%20Consulta%20de%20Osteopatia%20para%20Adultos&location=Escola%20Reikizen&ctz=Europe/Lisbon",
     "usedDate": null,
     "createdAt": "2026-08-03T22:52:12.028Z"
   }

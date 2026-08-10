@@ -636,6 +636,9 @@ async function writeRegistry(token, clinicId, entries, sha, message){
   });
   if(!res.ok){
     const errBody = await res.json().catch(()=>({}));
+    if(res.status === 404){
+      throw new Error(`Não consegui gravar o registo: "Not Found". Isto quase sempre significa que o token não tem acesso ao repositório privado "${GH_DATA_REPO}" — confirma em github.com/settings/tokens que esse repositório está listado com permissão "Contents: Read and write".`);
+    }
     throw new Error(errBody.message || `Não consegui gravar o registo (HTTP ${res.status}).`);
   }
   return res.json();

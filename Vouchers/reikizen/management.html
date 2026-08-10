@@ -677,7 +677,12 @@ async function readRegistryEntries(token){
     cache: 'no-store',
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
   });
-  if(!res.ok) throw new Error(`Não consegui ler o registo (HTTP ${res.status}).`);
+  if(!res.ok){
+    if(res.status === 404){
+      throw new Error(`"Not Found" — o token não tem acesso ao repositório privado "${GH_DATA_REPO}". Confirma em github.com/settings/tokens que este repositório está listado, com "Contents: Read and write".`);
+    }
+    throw new Error(`Não consegui ler o registo (HTTP ${res.status}).`);
+  }
   const file = await res.json();
   const binary = atob(file.content.replace(/\n/g,''));
   const bytes = new Uint8Array(binary.length);
@@ -701,6 +706,9 @@ async function writeRegistryEntries(token, entries, sha, message){
   });
   if(!res.ok){
     const errBody = await res.json().catch(()=>({}));
+    if(res.status === 404){
+      throw new Error(`"Not Found" — o token não tem acesso ao repositório privado "${GH_DATA_REPO}". Confirma em github.com/settings/tokens que este repositório está listado, com "Contents: Read and write".`);
+    }
     throw new Error(errBody.message || `HTTP ${res.status}`);
   }
 }

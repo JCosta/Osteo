@@ -602,9 +602,9 @@ if(CONFIG.bookingUrl){
   try{
     const bu = new URL(CONFIG.bookingUrl);
     if(/(^|\.)wa\.me$/.test(bu.hostname) || /(^|\.)whatsapp\.com$/.test(bu.hostname)){
-      document.getElementById('ns-book').textContent = 'Marca a tua consulta por WhatsApp (botão acima)';
+      document.getElementById('ns-book').textContent = 'Marca a tua consulta por WhatsApp (botão abaixo)';
     } else {
-      document.getElementById('ns-book').textContent = 'Marca a tua consulta (botão acima)';
+      document.getElementById('ns-book').textContent = 'Marca a tua consulta (botão abaixo)';
     }
   } catch(e){ /* mantém o texto genérico */ }
 } else {

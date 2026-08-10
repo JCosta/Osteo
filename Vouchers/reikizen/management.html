@@ -400,6 +400,10 @@
 <script>
 const GH_OWNER = 'JCosta';
 const GH_REPO = 'Osteo';
+/* Repositório PRIVADO, só para dados sensíveis de pacientes (registry.json
+   por clínica) — ver nota igual no gerador. Nunca é servido como site;
+   só se acede via API do GitHub, sempre com token. */
+const GH_DATA_REPO = 'Osteo-Data';
 const GH_BRANCH = 'main';
 const CONFIG_PATH = 'Vouchers/data/config.json';
 const TOKEN_STORAGE_KEY = 'voucherGenerator_ghToken'; // mesma chave usada no gerador
@@ -415,7 +419,7 @@ function detectClinicSlugFromUrl(){
   const parts = window.location.pathname.split('/').filter(Boolean);
   return parts.length >= 2 ? parts[parts.length - 2] : null;
 }
-function getRegistryPath(clinicId){ return `Vouchers/${clinicId}/data/registry.json`; }
+function getRegistryPath(clinicId){ return `${clinicId}/registry.json`; }
 let LOCKED_CLINIC_ID = null;
 let currentClinicId = null; // clínica atualmente selecionada/ativa
 
@@ -439,21 +443,34 @@ async function loadRegistry(){
     content.innerHTML = '<div class="loading">Escolhe uma clínica acima para ver o registo.</div>';
     return;
   }
+  const token = localStorage.getItem(TOKEN_STORAGE_KEY) || document.getElementById('gh-token').value.trim();
+  if(!token){
+    content.innerHTML = '<div class="loading">Cola o teu token do GitHub acima para veres os vales desta clínica — o registo agora vive num repositório privado, por conter dados de pacientes.</div>';
+    return;
+  }
   content.innerHTML = '<div class="loading">A carregar registo...</div>';
   try{
-    // leitura pública, sem token — raw.githubusercontent.com serve o ficheiro diretamente
-    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${getRegistryPath(currentClinicId)}?t=${Date.now()}`;
-    const res = await fetch(url, { cache: 'no-store' });
+    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_DATA_REPO}/contents/${getRegistryPath(currentClinicId)}?ref=${GH_BRANCH}`;
+    const res = await fetch(apiUrl, {
+      cache: 'no-store',
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+    });
     if(res.status === 404){
       allEntries = [];
+    } else if(res.status === 401 || res.status === 403){
+      throw new Error('Token inválido ou sem permissão neste repositório privado.');
     } else if(!res.ok){
       throw new Error(`HTTP ${res.status}`);
     } else {
-      allEntries = await res.json();
+      const file = await res.json();
+      const binary = atob(file.content.replace(/\n/g,''));
+      const bytes = new Uint8Array(binary.length);
+      for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+      allEntries = JSON.parse(new TextDecoder('utf-8').decode(bytes));
     }
     render();
   } catch(err){
-    content.innerHTML = `<div class="error">Não consegui carregar o registo (${err.message}). Confirma se já existe algum vale publicado.</div>`;
+    content.innerHTML = `<div class="error">Não consegui carregar o registo (${err.message}).</div>`;
     console.error(err);
   }
 }
@@ -655,7 +672,7 @@ function getToken(){
 }
 
 async function readRegistryEntries(token){
-  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(currentClinicId)}`;
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_DATA_REPO}/contents/${getRegistryPath(currentClinicId)}`;
   const res = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
     cache: 'no-store',
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
@@ -670,7 +687,7 @@ async function readRegistryEntries(token){
 }
 
 async function writeRegistryEntries(token, entries, sha, message){
-  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(currentClinicId)}`;
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_DATA_REPO}/contents/${getRegistryPath(currentClinicId)}`;
   const res = await fetch(apiUrl, {
     method: 'PUT',
     headers: {

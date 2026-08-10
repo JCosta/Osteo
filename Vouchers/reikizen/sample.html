@@ -150,6 +150,9 @@
   .map-wrap iframe{ width:100%; height:150px; border:0; display:block; filter:saturate(.85); }
 
   .stub-actions{ margin-top:1.1rem; display:flex; gap:.6rem; flex-wrap:wrap; }
+  .stub-actions .btn{ flex:1 1 130px; }
+  .stub-actions-secondary{ margin-top:.6rem; justify-content:center; }
+  .stub-actions-secondary .btn{ flex:0 0 auto; padding-left:1.4rem; padding-right:1.4rem; max-width:100%; }
 
   .social-row{
     margin-top:1.3rem; padding-top:1.1rem;
@@ -228,33 +231,35 @@
     .stub-actions{ display:none; }
     .map-wrap{ display:none; } /* o mapa embutido não imprime de forma fiável — a morada já está em texto */
 
-    /* Compactação: o conteúdo por defeito (pensado para ecrã) ultrapassa
-       a altura útil de uma página A5 (~186mm). Reduz-se espaçamento e
-       tamanhos de letra, e escondem-se só elementos puramente decorativos
-       (ícone animado, redes sociais) — nenhum texto/dado é removido. */
-    .icon-wrap{ display:none; }
+    /* O conteúdo por defeito (pensado para ecrã) ultrapassa a altura útil
+       de uma página A5 (~186mm), por isso ajusta-se aqui — mas com
+       espaçamento generoso o suficiente para preencher bem a página,
+       não ao mínimo possível. Só se escondem as redes sociais (sem
+       utilidade em papel); todo o resto do conteúdo mantém-se. */
+    .icon-wrap{ width:56px; height:56px; margin:0 auto 1rem; animation:none; }
+    .icon-wrap svg{ width:100%; height:100%; }
     .social-row{ display:none; }
 
-    .v-body{ padding:1rem 1.6rem .8rem; }
-    .eyebrow{ margin-bottom:.4rem; }
-    .v-title{ font-size:1.4rem; line-height:1.15; margin-bottom:.6rem; }
-    .v-desc{ font-size:.8rem; line-height:1.45; max-width:100%; }
+    .v-body{ padding:1.9rem 2.1rem 1.7rem; }
+    .eyebrow{ margin-bottom:.7rem; }
+    .v-title{ font-size:1.7rem; line-height:1.2; margin-bottom:1rem; }
+    .v-desc{ font-size:.9rem; line-height:1.65; max-width:100%; }
 
-    .details{ margin-top:.9rem; padding:.75rem 1rem; gap:.6rem; }
-    .details .item .k{ font-size:.58rem; }
-    .details .item .v{ font-size:.82rem; margin-top:.1rem; }
-    .details .item-wide{ padding-top:.45rem; }
+    .details{ margin-top:1.6rem; padding:1.1rem 1.4rem; gap:1rem; }
+    .details .item .k{ font-size:.64rem; }
+    .details .item .v{ font-size:.92rem; margin-top:.15rem; }
+    .details .item-wide{ padding-top:.65rem; }
 
-    .to-from{ margin-top:.9rem; }
-    .to-from .row{ margin-top:.35rem; }
-    .to-from .line{ font-size:1.15rem; min-height:1.4rem; }
+    .to-from{ margin-top:1.5rem; }
+    .to-from .row{ margin-top:.55rem; }
+    .to-from .line{ font-size:1.4rem; min-height:1.65rem; }
 
-    .stub{ padding:1rem 1.6rem 1.2rem; }
-    .stub .logo{ width:56px; height:56px; margin-bottom:.4rem; }
-    .stub .clinic{ font-size:1rem; }
-    .stub .addr{ margin-top:.3rem; font-size:.76rem; }
+    .stub{ padding:1.6rem 2.1rem 1.9rem; }
+    .stub .logo{ width:78px; height:78px; margin-bottom:.6rem; }
+    .stub .clinic{ font-size:1.15rem; }
+    .stub .addr{ margin-top:.4rem; font-size:.82rem; }
 
-    .valid-note{ margin-top:.8rem; font-size:.68rem; }
+    .valid-note{ margin-top:1.3rem; font-size:.74rem; }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -389,7 +394,9 @@
     <div class="stub-actions">
       <a class="btn primary" id="s-book" target="_blank" rel="noopener">Marcar consulta</a>
       <a class="btn ghost" id="s-directions" target="_blank" rel="noopener">Como chegar</a>
-      <button type="button" class="btn ghost" id="s-print" onclick="window.print()">Imprimir vale (A5)</button>
+    </div>
+    <div class="stub-actions stub-actions-secondary">
+      <button type="button" class="btn ghost" id="s-print" onclick="window.print()">Imprimir (A5)</button>
     </div>
     <div class="social-row" id="social-row"></div>
   </div>

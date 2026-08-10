@@ -197,6 +197,12 @@ const RAW_TEMPLATE = decodeTemplate();
 
 const GH_OWNER = 'JCosta';
 const GH_REPO = 'Osteo';
+/* Repositório PRIVADO, só para dados sensíveis de pacientes (registry.json
+   por clínica). Nunca é servido como site — só se acede via API do GitHub,
+   sempre autenticado. O site (Vouchers/*, config.json, vales publicados)
+   continua no repositório público GH_REPO, para o GitHub Pages funcionar
+   sem plano pago. */
+const GH_DATA_REPO = 'Osteo-Data';
 const GH_BRANCH = 'main';
 const GH_PAGES_BASE = 'https://osteo.bistrobit.fyi';
 const TOKEN_STORAGE_KEY = 'voucherGenerator_ghToken';
@@ -218,7 +224,7 @@ function detectClinicSlugFromUrl(){
 let LOCKED_CLINIC_ID = null; // definido depois de carregar o config.json
 
 function getClinicFolder(clinicId){ return `Vouchers/${clinicId}/generated`; }
-function getRegistryPath(clinicId){ return `Vouchers/${clinicId}/data/registry.json`; }
+function getRegistryPath(clinicId){ return `${clinicId}/registry.json`; }
 
 
 
@@ -596,7 +602,7 @@ function base64ToUtf8(b64){
 /* Lê um ficheiro JSON do repositório. Devolve { data, sha } — data é []
    se o ficheiro ainda não existir (primeira vez a usar o registo). */
 async function readRegistry(token, clinicId){
-  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(clinicId)}?ref=${GH_BRANCH}`;
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_DATA_REPO}/contents/${getRegistryPath(clinicId)}?ref=${GH_BRANCH}`;
   const res = await fetch(apiUrl, {
     cache: 'no-store',
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
@@ -612,7 +618,7 @@ async function readRegistry(token, clinicId){
 
 /* Grava o registo atualizado no repositório (cria ou atualiza). */
 async function writeRegistry(token, clinicId, entries, sha, message){
-  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(clinicId)}`;
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_DATA_REPO}/contents/${getRegistryPath(clinicId)}`;
   const body = {
     message,
     content: utf8ToBase64(JSON.stringify(entries, null, 2)),

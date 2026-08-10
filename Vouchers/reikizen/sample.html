@@ -94,6 +94,11 @@
     border:1px solid var(--sky); border-radius:999px;
     padding:.2rem .65rem;
   }
+  .warm-greeting{
+    font-family:'Fraunces',serif; font-style:italic; font-weight:400;
+    font-size:1rem; line-height:1.5; color:var(--sage-dk); opacity:.85;
+    margin-bottom:1.1rem;
+  }
   .eyebrow{
     text-transform:uppercase; letter-spacing:.24em; font-size:.68rem;
     color:var(--apricot); margin-bottom:.7rem; display:block;
@@ -147,6 +152,11 @@
   .stub .addr{ font-size:.82rem; opacity:.85; margin-top:.5rem; line-height:1.5; text-align:center; }
 
   .map-wrap{ margin-top:1rem; border-radius:12px; overflow:hidden; border:1px solid rgba(251,245,234,.25); }
+  .qr-wrap{ display:none; }
+  .qr-box{ background:white; border-radius:8px; padding:6px; display:inline-block; }
+  .qr-box svg{ display:block; width:100%; height:100%; }
+  .qr-caption{ display:block; font-size:.68rem; color:var(--cream); opacity:.9; margin-top:.4rem; max-width:180px; }
+
   .map-wrap iframe{ width:100%; height:150px; border:0; display:block; filter:saturate(.85); }
 
   .stub-actions{ margin-top:1.1rem; display:flex; gap:.6rem; flex-wrap:wrap; }
@@ -253,6 +263,7 @@
     .stub-actions{ display:none; }
     .audio-row{ display:none; }
     .next-steps{ display:none; } /* mantém a impressão A5 dentro do espaço já ajustado a uma página */
+    .warm-greeting{ display:none; } /* a saudação é para quem abre o vale digital — o código QR já leva lá */
     .map-wrap{ display:none; } /* o mapa embutido não imprime de forma fiável — a morada já está em texto */
 
     /* Nota: motores de impressão diferentes (e mesmo o mesmo motor, com
@@ -283,6 +294,9 @@
     .stub .logo{ width:64px; height:64px; margin-bottom:.5rem; }
     .stub .clinic{ font-size:1.05rem; }
     .stub .addr{ margin-top:.35rem; font-size:.78rem; }
+
+    .qr-wrap{ display:block; margin-top:.7rem; }
+    .qr-box{ width:64px; height:64px; padding:4px; }
 
     .valid-note{ margin-top:1rem; font-size:.7rem; }
   }
@@ -374,6 +388,7 @@
 
   <div class="v-body">
     <span class="voucher-no" id="v-number"></span>
+    <p class="warm-greeting" id="v-greeting"></p>
     <span class="eyebrow" id="v-eyebrow"></span>
     <h1 class="v-title" id="v-title"></h1>
 
@@ -415,6 +430,10 @@
     <div class="clinic" id="s-clinic"></div>
     <div class="practitioner" id="s-practitioner"></div>
     <div class="addr" id="s-address"></div>
+    <div class="qr-wrap" id="qr-wrap">
+      <div class="qr-box" id="qr-box"></div>
+      <span class="qr-caption">Aponte a câmara para marcar a sua consulta</span>
+    </div>
     <div class="map-wrap"><iframe id="s-map" loading="lazy"></iframe></div>
     <div class="next-steps">
       <div class="next-steps-title">Próximos passos</div>
@@ -508,7 +527,13 @@ const CONFIG = {
   // Cor de destaque (botões, selo, "próximos passos"). Deixa por omitir
   // para usar o tom quente padrão. Definida por tipo de consulta no
   // config.json — permite diferenciar visualmente osteopatia, podologia, etc.
-  accentColor: "#E2985F"
+  accentColor: "#E2985F",
+
+  // Código QR (SVG), gerado pelo gerador antes de publicar, a apontar para
+  // o próprio vale já publicado — só aparece na versão impressa (no ecrã já
+  // há um botão de marcação clicável). Fica vazio quando não publicado
+  // ainda (ex: ao transferir o ficheiro sem publicar).
+  qrCodeSvg: ""
 };
 
 /* ================================================================
@@ -519,6 +544,9 @@ if(CONFIG.accentColor){
   document.documentElement.style.setProperty('--apricot', CONFIG.accentColor);
 }
 document.getElementById('v-eyebrow').textContent = CONFIG.eyebrow;
+document.getElementById('v-greeting').textContent = CONFIG.toName
+  ? `Este momento é para si, ${CONFIG.toName}. ❤️ Foi-lhe oferecida uma experiência de cuidado na nossa clínica.`
+  : 'Este momento é para si. ❤️ Foi-lhe oferecida uma experiência de cuidado na nossa clínica.';
 
 function generateVoucherCode(){
   // JT-XXXXXX : iniciais + código derivado dos dados do vale.
@@ -586,6 +614,11 @@ if(CONFIG.audioSrc){
   document.getElementById('s-audio').src = CONFIG.audioSrc;
 } else {
   document.getElementById('audio-row').style.display = 'none';
+}
+if(CONFIG.qrCodeSvg){
+  document.getElementById('qr-box').innerHTML = CONFIG.qrCodeSvg;
+} else {
+  document.getElementById('qr-wrap').style.display = 'none';
 }
 document.getElementById('seal-text').textContent = CONFIG.sealText;
 

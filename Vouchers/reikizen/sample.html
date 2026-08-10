@@ -231,35 +231,36 @@
     .stub-actions{ display:none; }
     .map-wrap{ display:none; } /* o mapa embutido não imprime de forma fiável — a morada já está em texto */
 
-    /* O conteúdo por defeito (pensado para ecrã) ultrapassa a altura útil
-       de uma página A5 (~186mm), por isso ajusta-se aqui — mas com
-       espaçamento generoso o suficiente para preencher bem a página,
-       não ao mínimo possível. Só se escondem as redes sociais (sem
-       utilidade em papel); todo o resto do conteúdo mantém-se. */
-    .icon-wrap{ width:56px; height:56px; margin:0 auto 1rem; animation:none; }
+    /* Nota: motores de impressão diferentes (e mesmo o mesmo motor, com
+       fontes diferentes) medem o texto de forma ligeiramente diferente —
+       por isso estes valores são deliberadamente conservadores, com
+       margem de segurança, em vez de ajustados ao limite exato testado
+       num só motor. Prioridade: caber sempre numa página, mesmo que
+       sobre um pouco de espaço em branco. */
+    .icon-wrap{ width:48px; height:48px; margin:0 auto .8rem; animation:none; }
     .icon-wrap svg{ width:100%; height:100%; }
     .social-row{ display:none; }
 
-    .v-body{ padding:1.9rem 2.1rem 1.7rem; }
-    .eyebrow{ margin-bottom:.7rem; }
-    .v-title{ font-size:1.7rem; line-height:1.2; margin-bottom:1rem; }
-    .v-desc{ font-size:.9rem; line-height:1.65; max-width:100%; }
+    .v-body{ padding:1.4rem 1.6rem 1.3rem; }
+    .eyebrow{ margin-bottom:.5rem; }
+    .v-title{ font-size:1.3rem; line-height:1.25; margin-bottom:.8rem; }
+    .v-desc{ font-size:.82rem; line-height:1.5; max-width:100%; }
 
-    .details{ margin-top:1.6rem; padding:1.1rem 1.4rem; gap:1rem; }
-    .details .item .k{ font-size:.64rem; }
-    .details .item .v{ font-size:.92rem; margin-top:.15rem; }
-    .details .item-wide{ padding-top:.65rem; }
+    .details{ margin-top:1.2rem; padding:.9rem 1.2rem; gap:.8rem; }
+    .details .item .k{ font-size:.6rem; }
+    .details .item .v{ font-size:.85rem; margin-top:.12rem; }
+    .details .item-wide{ padding-top:.5rem; }
 
-    .to-from{ margin-top:1.5rem; }
-    .to-from .row{ margin-top:.55rem; }
-    .to-from .line{ font-size:1.4rem; min-height:1.65rem; }
+    .to-from{ margin-top:1.1rem; }
+    .to-from .row{ margin-top:.45rem; }
+    .to-from .line{ font-size:1.25rem; min-height:1.5rem; }
 
-    .stub{ padding:1.6rem 2.1rem 1.9rem; }
-    .stub .logo{ width:78px; height:78px; margin-bottom:.6rem; }
-    .stub .clinic{ font-size:1.15rem; }
-    .stub .addr{ margin-top:.4rem; font-size:.82rem; }
+    .stub{ padding:1.2rem 1.7rem 1.5rem; }
+    .stub .logo{ width:64px; height:64px; margin-bottom:.5rem; }
+    .stub .clinic{ font-size:1.05rem; }
+    .stub .addr{ margin-top:.35rem; font-size:.78rem; }
 
-    .valid-note{ margin-top:1.3rem; font-size:.74rem; }
+    .valid-note{ margin-top:1rem; font-size:.7rem; }
   }
 
   @media (prefers-reduced-motion: reduce){

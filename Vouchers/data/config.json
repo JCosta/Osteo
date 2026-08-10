@@ -8,7 +8,9 @@
       "duration": "45 minutos",
       "recommendedAge": "0–12 anos",
       "active": true,
-      "professionalTitle": "Osteopata"
+      "professionalTitle": "Osteopata",
+      "audioTrack": "warm",
+      "accentColor": "#E2985F"
     },
     {
       "id": "adult",
@@ -18,17 +20,9 @@
       "duration": "50 minutos",
       "recommendedAge": "Adultos",
       "active": true,
-      "professionalTitle": "Osteopata"
-    },
-    {
-      "label": "Fisio Pelvica",
-      "title": "Fisio Pélvica",
-      "professionalTitle": "Fisioterapeuta",
-      "description": "a mulher precisa de cuidado! Cuide de si, sempre!",
-      "duration": "45 minutos",
-      "recommendedAge": "Adultos",
-      "id": "fisio-pelvica",
-      "active": true
+      "professionalTitle": "Osteopata",
+      "audioTrack": "calm",
+      "accentColor": "#E2985F"
     }
   ],
   "clinics": [
@@ -38,7 +32,7 @@
       "address": "R. Amália Rodrigues, 4715-213 Braga",
       "mapEmbedUrl": "https://www.google.com/maps?q=Escola+Reikizen+Braga&output=embed",
       "directionsUrl": "https://maps.app.goo.gl/24U3AdtvhUe2Kj1T9",
-      "bookingUrl": "https://wa.me/351912426766",
+      "bookingUrl": "https://wa.me/351964222510",
       "active": true,
       "logo": ""
     },

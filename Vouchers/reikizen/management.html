@@ -179,7 +179,7 @@
     display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em;
     color:var(--sage); margin-bottom:.4rem;
   }
-  .field-block input, .field-block textarea{
+  .field-block input, .field-block textarea, .field-block select{
     width:100%; padding:.65rem .8rem; border:1px solid var(--sky); border-radius:10px;
     background:var(--cream); font-family:'Inter',sans-serif; font-size:.9rem; color:var(--sage-dk);
     box-sizing:border-box;
@@ -1156,7 +1156,13 @@ const ENTITY_SCHEMA = {
       { key:'professionalTitle', label:'Como se chama o profissional', type:'text', placeholder:'Osteopata, Podologista, Fisioterapeuta...' },
       { key:'description', label:'Descrição (texto do vale)', type:'textarea' },
       { key:'duration', label:'Duração', type:'text', placeholder:'45 minutos' },
-      { key:'recommendedAge', label:'Recomendado para', type:'text', placeholder:'0–12 anos / Adultos' }
+      { key:'recommendedAge', label:'Recomendado para', type:'text', placeholder:'0–12 anos / Adultos' },
+      { key:'audioTrack', label:'Som ambiente do vale (opcional, escolha da pessoa que recebe)', type:'select', options:[
+        { value:'', label:'Sem som ambiente' },
+        { value:'warm', label:'Quente/acolhedor — ex: pediatria' },
+        { value:'calm', label:'Calmo/espaçoso — ex: adultos' }
+      ]},
+      { key:'accentColor', label:'Cor de destaque deste serviço (botões, selo)', type:'color' }
     ]
   },
   clinics: {
@@ -1222,6 +1228,24 @@ function renderEntityField(field, existing){
 
   const value = existing ? (existing[field.key] || '') : '';
   const placeholder = field.placeholder ? ` placeholder="${escapeAttr(field.placeholder)}"` : '';
+
+  if(field.type === 'color'){
+    return `<div class="field-block">
+      <label for="ef-${field.key}">${escapeHtml(field.label)}</label>
+      <input type="color" id="ef-${field.key}" data-field="${field.key}" value="${escapeAttr(value || '#E2985F')}" style="height:42px; padding:.25rem;">
+    </div>`;
+  }
+
+  if(field.type === 'select'){
+    const options = field.options.map(opt =>
+      `<option value="${escapeAttr(opt.value)}"${opt.value === value ? ' selected' : ''}>${escapeHtml(opt.label)}</option>`
+    ).join('');
+    return `<div class="field-block">
+      <label for="ef-${field.key}">${escapeHtml(field.label)}</label>
+      <select id="ef-${field.key}" data-field="${field.key}">${options}</select>
+    </div>`;
+  }
+
   if(field.type === 'textarea'){
     return `<div class="field-block">
       <label for="ef-${field.key}">${escapeHtml(field.label)}</label>

@@ -96,9 +96,10 @@
   }
   .warm-greeting{
     font-family:'Fraunces',serif; font-style:italic; font-weight:400;
-    font-size:1rem; line-height:1.5; color:var(--sage-dk); opacity:.85;
-    margin-bottom:1.1rem;
+    font-size:.82rem; line-height:1.42; color:var(--sage-dk); opacity:.78;
+    margin-bottom:.7rem;
   }
+  .warm-greeting .heart-icon{ color:var(--apricot); vertical-align:-2px; }
   .eyebrow{
     text-transform:uppercase; letter-spacing:.24em; font-size:.68rem;
     color:var(--apricot); margin-bottom:.7rem; display:block;
@@ -534,10 +535,18 @@ function escapeHtml(str){
   d.textContent = str;
   return d.innerHTML;
 }
-const toNameSafe = CONFIG.toName ? escapeHtml(CONFIG.toName) : '';
+function toDisplayName(str){
+  // Normaliza a capitalização (ex: "DUARTE SOUSA" ou "duarte sousa" -> "Duarte Sousa")
+  // — independentemente de como a pessoa escreveu no gerador.
+  return str.trim().split(/\s+/).map(w =>
+    w.length ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w
+  ).join(' ');
+}
+const HEART_ICON = '<svg class="heart-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 21s-6.7-4.35-9.33-8.02C1.02 10.86 1.3 8 3.4 6.2 5.3 4.55 7.9 4.9 9.3 6.6L12 9.8l2.7-3.2c1.4-1.7 4-2.05 5.9-.4 2.1 1.8 2.38 4.66.73 6.78C18.7 16.65 12 21 12 21z"/></svg>';
+const toNameSafe = CONFIG.toName ? escapeHtml(toDisplayName(CONFIG.toName)) : '';
 document.getElementById('v-greeting').innerHTML = CONFIG.toName
-  ? `Este momento é para si, ${toNameSafe}. ❤️<br>Foi-lhe oferecida uma experiência de cuidado na nossa clínica.`
-  : 'Este momento é para si. ❤️<br>Foi-lhe oferecida uma experiência de cuidado na nossa clínica.';
+  ? `Este momento é para si, ${toNameSafe}. ${HEART_ICON}<br>Foi-lhe oferecida uma experiência de cuidado na nossa clínica.`
+  : `Este momento é para si. ${HEART_ICON}<br>Foi-lhe oferecida uma experiência de cuidado na nossa clínica.`;
 
 function generateVoucherCode(){
   // JT-XXXXXX : iniciais + código derivado dos dados do vale.

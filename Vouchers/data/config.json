@@ -86,16 +86,16 @@
   ],
   "therapists": [
     {
-      "id": "joana-teixeira",
       "name": "Joana Teixeira",
-      "active": true,
       "clinics": [
         "reikizen"
       ],
       "specialties": [
         "pediatric",
         "adult"
-      ]
+      ],
+      "id": "joana-teixeira",
+      "active": true
     }
   ],
   "validityOptions": [

@@ -9,7 +9,6 @@
       "recommendedAge": "0–12 anos",
       "active": true,
       "professionalTitle": "Osteopata",
-      "audioTrack": "warm",
       "accentColor": "#E2985F"
     },
     {
@@ -21,7 +20,6 @@
       "recommendedAge": "Adultos",
       "active": true,
       "professionalTitle": "Osteopata",
-      "audioTrack": "calm",
       "accentColor": "#E2985F"
     }
   ],
@@ -103,7 +101,6 @@
   ],
   "validityOptions": [
     "3 meses após emissão",
-    "6 meses após emissão",
-    "12 meses após emissão"
+    "6 meses após emissão"
   ]
 }

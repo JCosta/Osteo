@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Confirmações de consultas</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --card: #ffffff;
+    --border: #e2e0da;
+    --text: #2c2c2a;
+    --muted: #6b6a63;
+    --accent: #0f6e56;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+
+  #gate {
+    max-width: 380px;
+    margin: 80px auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+  }
+  #gate input {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 12px 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  #gate button, .toolbar button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 16px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  #gate button:hover, .toolbar button:hover { opacity: 0.9; }
+  #erro { color: #a32d2d; font-size: 13px; margin-top: 8px; min-height: 16px; }
+
+  #painel { display: none; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar button.secundario {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .aba {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .aba.ativa { background: var(--text); color: white; border-color: var(--text); }
+
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  th, td { text-align: left; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; background: #faf9f6; }
+  tr:last-child td { border-bottom: none; }
+
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .b-NOTIFICADO { background: #e6f1fb; color: #0c447c; }
+  .b-LEMBRETE_ENVIADO { background: #faeeda; color: #854f0b; }
+  .b-CONFIRMADO { background: #eaf3de; color: #27500a; }
+  .b-AGUARDA_REAGENDAMENTO { background: #faece7; color: #993c1d; }
+  .b-REAGENDAMENTO_PEDIDO { background: #faece7; color: #993c1d; }
+  .b-CANCELADO { background: #f1efe8; color: #444441; }
+
+  #vazio, #carregando { text-align: center; color: var(--muted); padding: 40px 0; font-size: 14px; }
+  #vazio { display: none; }
+</style>
+</head>
+<body>
+
+  <div id="gate">
+    <h1>Confirmações de consultas</h1>
+    <p class="sub">Introduz o token de acesso para veres os dados.</p>
+    <input type="password" id="tokenInput" placeholder="Token de acesso" />
+    <button onclick="guardarToken()">Entrar</button>
+    <div id="erro"></div>
+  </div>
+
+  <div id="painel">
+    <h1>Confirmações de consultas</h1>
+    <p class="sub">Estado das notificações enviadas — atualizado a partir da folha de confirmações.</p>
+
+    <div class="toolbar">
+      <button onclick="carregarDados()">↻ Atualizar</button>
+      <button class="secundario" onclick="sair()">Sair</button>
+      <div class="abas" id="abas"></div>
+    </div>
+
+    <div id="carregando">A carregar…</div>
+    <div id="vazio">Sem registos para o filtro selecionado.</div>
+    <table id="tabela" style="display:none">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Clínica</th>
+          <th>Consulta</th>
+          <th>Estado</th>
+          <th>Telefone</th>
+          <th>Reagendamento pedido</th>
+        </tr>
+      </thead>
+      <tbody id="corpoTabela"></tbody>
+    </table>
+  </div>
+
+<script>
+  // Preenche com o URL do teu Web App (o mesmo usado no webhook do WhatsApp), terminado em /exec
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/COLA_AQUI_O_TEU_ID/exec';
+
+  const CHAVE_TOKEN = 'osteo_confirmacoes_token';
+  const ROTULOS_ESTADO = {
+    NOTIFICADO: 'Notificado',
+    LEMBRETE_ENVIADO: 'Lembrete enviado',
+    CONFIRMADO: 'Confirmado',
+    AGUARDA_REAGENDAMENTO: 'Aguarda reagendamento',
+    REAGENDAMENTO_PEDIDO: 'Reagendamento pedido',
+    CANCELADO: 'Cancelado',
+  };
+
+  let todasAsLinhas = [];
+  let filtroAtivo = 'TODOS';
+
+  function token() {
+    return localStorage.getItem(CHAVE_TOKEN) || '';
+  }
+
+  function guardarToken() {
+    const valor = document.getElementById('tokenInput').value.trim();
+    if (!valor) return;
+    localStorage.setItem(CHAVE_TOKEN, valor);
+    carregarDados();
+  }
+
+  function sair() {
+    localStorage.removeItem(CHAVE_TOKEN);
+    document.getElementById('painel').style.display = 'none';
+    document.getElementById('gate').style.display = 'block';
+    document.getElementById('tokenInput').value = '';
+  }
+
+  async function carregarDados() {
+    const erroEl = document.getElementById('erro');
+    erroEl.textContent = '';
+    document.getElementById('carregando').style.display = 'block';
+    document.getElementById('tabela').style.display = 'none';
+    document.getElementById('vazio').style.display = 'none';
+
+    try {
+      const url = `${APPS_SCRIPT_URL}?action=dashboard&token=${encodeURIComponent(token())}`;
+      const resposta = await fetch(url, { cache: 'no-store' });
+      const dados = await resposta.json();
+
+      if (!dados.ok) {
+        erroEl.textContent = 'Token inválido. Tenta novamente.';
+        localStorage.removeItem(CHAVE_TOKEN);
+        document.getElementById('painel').style.display = 'none';
+        document.getElementById('gate').style.display = 'block';
+        return;
+      }
+
+      todasAsLinhas = dados.linhas;
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('painel').style.display = 'block';
+      construirAbas();
+      renderizar();
+    } catch (e) {
+      erroEl.textContent = 'Não foi possível ligar ao servidor. Tenta novamente em instantes.';
+    } finally {
+      document.getElementById('carregando').style.display = 'none';
+    }
+  }
+
+  function construirAbas() {
+    const estados = ['TODOS', ...new Set(todasAsLinhas.map((l) => l.estado))];
+    const container = document.getElementById('abas');
+    container.innerHTML = '';
+    estados.forEach((estado) => {
+      const btn = document.createElement('button');
+      btn.className = 'aba' + (estado === filtroAtivo ? ' ativa' : '');
+      btn.textContent = estado === 'TODOS' ? 'Todos' : (ROTULOS_ESTADO[estado] || estado);
+      btn.onclick = () => { filtroAtivo = estado; construirAbas(); renderizar(); };
+      container.appendChild(btn);
+    });
+  }
+
+  function renderizar() {
+    const linhas = filtroAtivo === 'TODOS' ? todasAsLinhas : todasAsLinhas.filter((l) => l.estado === filtroAtivo);
+    const corpo = document.getElementById('corpoTabela');
+    corpo.innerHTML = '';
+
+    if (linhas.length === 0) {
+      document.getElementById('vazio').style.display = 'block';
+      document.getElementById('tabela').style.display = 'none';
+      return;
+    }
+    document.getElementById('vazio').style.display = 'none';
+    document.getElementById('tabela').style.display = 'table';
+
+    linhas.forEach((l) => {
+      const tr = document.createElement('tr');
+      const dataFormatada = new Date(l.dataHora).toLocaleString('pt-PT', {
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
+      tr.innerHTML = `
+        <td>${escapar(l.cliente)}</td>
+        <td>${escapar(l.clinica)}</td>
+        <td>${dataFormatada}</td>
+        <td><span class="badge b-${l.estado}">${ROTULOS_ESTADO[l.estado] || l.estado}</span></td>
+        <td>${escapar(l.telefone)}</td>
+        <td>${escapar(l.respostaReagendamento || '—')}</td>
+      `;
+      corpo.appendChild(tr);
+    });
+  }
+
+  function escapar(texto) {
+    const div = document.createElement('div');
+    div.textContent = texto == null ? '' : String(texto);
+    return div.innerHTML;
+  }
+
+  // Arranque
+  if (token()) {
+    carregarDados();
+  }
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestão de Vouchers</title>
+<title>Gestão de Vouchers e Marcações</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -58,24 +58,13 @@
   }
   .tab.active{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
 
-  .search-row{ display:flex; gap:.5rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap; }
+  .search-row{ display:flex; gap:.5rem; align-items:center; margin-bottom:1rem; }
   .search-row input{
-    flex:1; min-width:180px; max-width:320px; padding:.6rem .9rem; border:1px solid var(--sky); border-radius:999px;
+    flex:1; max-width:320px; padding:.6rem .9rem; border:1px solid var(--sky); border-radius:999px;
     background:var(--paper); font-size:.85rem; color:var(--sage-dk);
   }
-  #btn-refresh-registry{
-    padding:.6rem 1rem; border:1px solid var(--sky); border-radius:999px; background:var(--paper);
-    color:var(--sage-dk); font-size:.85rem; cursor:pointer; white-space:nowrap;
-  }
-  #btn-refresh-registry:hover{ background:rgba(185,205,203,.25); }
-  #btn-refresh-registry:disabled{ opacity:.6; cursor:not-allowed; }
 
-  .token-row{ display:flex; gap:.5rem .9rem; align-items:center; font-size:.78rem; flex-wrap:wrap; }
-  .token-row input[type="password"]{
-    flex:1; min-width:200px; padding:.55rem .8rem; border:1px solid var(--sky); border-radius:999px;
-    background:var(--paper); font-size:.82rem; color:var(--sage-dk); box-sizing:border-box;
-  }
-  .token-row label{ display:flex; align-items:center; gap:.3rem; white-space:nowrap; }
+  .token-row{ display:flex; gap:.5rem; align-items:center; font-size:.78rem; }
   .token-row input{
     padding:.5rem .7rem; border:1px solid var(--sky); border-radius:8px; background:var(--paper);
     font-size:.8rem; width:180px;
@@ -85,17 +74,14 @@
   table{ width:100%; border-collapse:collapse; background:var(--paper); border-radius:14px; overflow:hidden; }
   thead th{
     text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.08em;
-    padding:.9rem 1rem; background:var(--sage); color:var(--cream);
+    padding:.8rem .9rem; background:var(--sage); color:var(--cream);
   }
-  tbody td{ padding:1.15rem 1rem; font-size:.85rem; line-height:1.5; border-top:1px solid var(--sky); vertical-align:top; }
-  tbody tr:first-child td{ border-top:none; }
-  tbody tr:nth-child(even){ background:rgba(185,205,203,.08); }
-  tbody tr:hover{ background:rgba(185,205,203,.2); }
-  tbody tr.expiring{ background:rgba(192,96,74,.08); }
-  tbody tr.expiring:nth-child(even){ background:rgba(192,96,74,.11); }
+  tbody td{ padding:.8rem .9rem; font-size:.85rem; border-top:1px solid var(--cream); vertical-align:middle; }
+  tbody tr:hover{ background:rgba(185,205,203,.15); }
+  tbody tr.expiring{ background:rgba(192,96,74,.07); }
 
   .pill{
-    display:inline-block; padding:.3rem .75rem; border-radius:999px; font-size:.7rem; font-weight:500;
+    display:inline-block; padding:.25rem .7rem; border-radius:999px; font-size:.7rem; font-weight:500;
   }
   .pill.pendente{ background:rgba(226,152,95,.18); color:#a85f2c; }
   .pill.agendado{ background:rgba(92,127,166,.18); color:#3d5c80; }
@@ -108,10 +94,10 @@
   .notes-preview{ font-size:.78rem; opacity:.75; max-width:140px; display:block;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-  .row-actions{ display:flex; flex-direction:column; align-items:flex-start; gap:.45rem; min-width:128px; }
+  .row-actions{ display:flex; gap:.4rem; flex-wrap:wrap; }
   .row-actions a, .row-actions button{
-    font-size:.72rem; padding:.4rem .8rem; border-radius:999px; border:none; cursor:pointer;
-    text-decoration:none; white-space:nowrap; width:100%; text-align:center; box-sizing:border-box;
+    font-size:.72rem; padding:.35rem .7rem; border-radius:999px; border:none; cursor:pointer;
+    text-decoration:none; white-space:nowrap;
   }
   .row-actions a{ background:var(--sky); color:var(--sage-dk); }
   .row-actions button{ background:var(--sage); color:var(--cream); }
@@ -179,7 +165,7 @@
     display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em;
     color:var(--sage); margin-bottom:.4rem;
   }
-  .field-block input, .field-block textarea, .field-block select{
+  .field-block input, .field-block textarea{
     width:100%; padding:.65rem .8rem; border:1px solid var(--sky); border-radius:10px;
     background:var(--cream); font-family:'Inter',sans-serif; font-size:.9rem; color:var(--sage-dk);
     box-sizing:border-box;
@@ -202,10 +188,11 @@
     font-size:.85rem; cursor:pointer; color:var(--sage-dk); font-family:'Fraunces',serif;
   }
   .view-tab.active{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+  a.view-tab{ text-decoration:none; display:inline-block; }
 
-  .config-token-row{ display:flex; gap:.6rem; align-items:center; margin:1.5rem 0; flex-wrap:wrap; }
+  .config-token-row{ display:flex; gap:.6rem; align-items:center; margin:1.5rem 0; }
   .config-token-row input{
-    flex:1; min-width:200px; max-width:340px; padding:.6rem .9rem; border:1px solid var(--sky); border-radius:8px;
+    flex:1; max-width:340px; padding:.6rem .9rem; border:1px solid var(--sky); border-radius:8px;
     background:var(--paper); font-size:.85rem;
   }
 
@@ -223,9 +210,9 @@
     box-shadow:0 10px 24px -20px rgba(51,69,47,.35);
   }
   .config-item.inactive{ opacity:.55; }
-  .config-item-info{ font-size:.88rem; color:var(--sage-dk); min-width:0; }
+  .config-item-info{ font-size:.88rem; color:var(--sage-dk); }
   .config-item-info .sub{ font-size:.76rem; opacity:.7; margin-top:.15rem; }
-  .config-item-actions{ display:flex; gap:.4rem; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end; }
+  .config-item-actions{ display:flex; gap:.4rem; flex-shrink:0; }
   .config-item-actions button{
     font-size:.72rem; padding:.35rem .7rem; border-radius:999px; border:none; cursor:pointer;
     background:var(--sky); color:var(--sage-dk); white-space:nowrap;
@@ -233,19 +220,12 @@
   .config-item-actions button.danger{ background:transparent; border:1px solid var(--red); color:var(--red); }
   .config-empty{ font-size:.85rem; opacity:.6; padding:.5rem; }
 
-  @media(max-width:600px){
-    .config-item{ flex-direction:column; align-items:stretch; gap:.7rem; }
-    .config-item-actions{ justify-content:flex-start; }
-    .config-item-actions button{ flex:1 1 auto; text-align:center; }
-  }
-
   .clinic-context{
-    display:flex; align-items:center; gap:.7rem; margin-bottom:1.2rem; flex-wrap:wrap;
+    display:flex; align-items:center; gap:.7rem; margin-bottom:1.2rem;
     background:var(--paper); border-radius:12px; padding:.7rem 1rem;
     box-shadow:0 10px 24px -20px rgba(51,69,47,.35);
   }
   .clinic-context select{
-    flex:1; min-width:160px; max-width:100%; box-sizing:border-box;
     padding:.5rem .8rem; border:1px solid var(--sky); border-radius:8px;
     background:var(--cream); font-size:.9rem; font-family:'Fraunces',serif; color:var(--sage-dk);
   }
@@ -259,13 +239,14 @@
 
 <header>
   <a class="nav-link" href="generator.html">+ Criar novo voucher</a>
-  <h1>Gestão de Vouchers</h1>
+  <h1>Gestão de Vouchers e Marcações</h1>
   <p>Visão geral de tudo o que foi emitido, utilizado e está pendente.</p>
 </header>
 
 <div class="view-tabs">
   <button class="view-tab active" id="tab-vales">Vales</button>
   <button class="view-tab" id="tab-config">Configurações</button>
+  <a class="view-tab" href="/Osteo/AppointmentManagement/appointments.html">Marcações</a>
 </div>
 
 <div class="wrap" id="vales-view">
@@ -296,7 +277,6 @@
 
   <div class="search-row">
     <input type="search" id="search-input" placeholder="Pesquisar por nome ou nº de vale...">
-    <button type="button" id="btn-refresh-registry" title="Voltar a carregar o registo (útil se acabaste de publicar um vale)">↻ Atualizar</button>
   </div>
 
   <div class="toolbar">
@@ -400,10 +380,6 @@
 <script>
 const GH_OWNER = 'JCosta';
 const GH_REPO = 'Osteo';
-/* Repositório PRIVADO, só para dados sensíveis de pacientes (registry.json
-   por clínica) — ver nota igual no gerador. Nunca é servido como site;
-   só se acede via API do GitHub, sempre com token. */
-const GH_DATA_REPO = 'Osteo-Data';
 const GH_BRANCH = 'main';
 const CONFIG_PATH = 'Vouchers/data/config.json';
 const TOKEN_STORAGE_KEY = 'voucherGenerator_ghToken'; // mesma chave usada no gerador
@@ -419,7 +395,7 @@ function detectClinicSlugFromUrl(){
   const parts = window.location.pathname.split('/').filter(Boolean);
   return parts.length >= 2 ? parts[parts.length - 2] : null;
 }
-function getRegistryPath(clinicId){ return `${clinicId}/registry.json`; }
+function getRegistryPath(clinicId){ return `Vouchers/${clinicId}/data/registry.json`; }
 let LOCKED_CLINIC_ID = null;
 let currentClinicId = null; // clínica atualmente selecionada/ativa
 
@@ -443,34 +419,21 @@ async function loadRegistry(){
     content.innerHTML = '<div class="loading">Escolhe uma clínica acima para ver o registo.</div>';
     return;
   }
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY) || document.getElementById('gh-token').value.trim();
-  if(!token){
-    content.innerHTML = '<div class="loading">Cola o teu token do GitHub acima para veres os vales desta clínica — o registo agora vive num repositório privado, por conter dados de pacientes.</div>';
-    return;
-  }
   content.innerHTML = '<div class="loading">A carregar registo...</div>';
   try{
-    const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_DATA_REPO}/contents/${getRegistryPath(currentClinicId)}?ref=${GH_BRANCH}`;
-    const res = await fetch(apiUrl, {
-      cache: 'no-store',
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
-    });
+    // leitura pública, sem token — raw.githubusercontent.com serve o ficheiro diretamente
+    const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${getRegistryPath(currentClinicId)}?t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
     if(res.status === 404){
       allEntries = [];
-    } else if(res.status === 401 || res.status === 403){
-      throw new Error('Token inválido ou sem permissão neste repositório privado.');
     } else if(!res.ok){
       throw new Error(`HTTP ${res.status}`);
     } else {
-      const file = await res.json();
-      const binary = atob(file.content.replace(/\n/g,''));
-      const bytes = new Uint8Array(binary.length);
-      for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
-      allEntries = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+      allEntries = await res.json();
     }
     render();
   } catch(err){
-    content.innerHTML = `<div class="error">Não consegui carregar o registo (${err.message}).</div>`;
+    content.innerHTML = `<div class="error">Não consegui carregar o registo (${err.message}). Confirma se já existe algum vale publicado.</div>`;
     console.error(err);
   }
 }
@@ -672,17 +635,11 @@ function getToken(){
 }
 
 async function readRegistryEntries(token){
-  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_DATA_REPO}/contents/${getRegistryPath(currentClinicId)}`;
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(currentClinicId)}`;
   const res = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
-    cache: 'no-store',
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
   });
-  if(!res.ok){
-    if(res.status === 404){
-      throw new Error(`"Not Found" — o token não tem acesso ao repositório privado "${GH_DATA_REPO}". Confirma em github.com/settings/tokens que este repositório está listado, com "Contents: Read and write".`);
-    }
-    throw new Error(`Não consegui ler o registo (HTTP ${res.status}).`);
-  }
+  if(!res.ok) throw new Error(`Não consegui ler o registo (HTTP ${res.status}).`);
   const file = await res.json();
   const binary = atob(file.content.replace(/\n/g,''));
   const bytes = new Uint8Array(binary.length);
@@ -692,7 +649,7 @@ async function readRegistryEntries(token){
 }
 
 async function writeRegistryEntries(token, entries, sha, message){
-  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_DATA_REPO}/contents/${getRegistryPath(currentClinicId)}`;
+  const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${getRegistryPath(currentClinicId)}`;
   const res = await fetch(apiUrl, {
     method: 'PUT',
     headers: {
@@ -706,9 +663,6 @@ async function writeRegistryEntries(token, entries, sha, message){
   });
   if(!res.ok){
     const errBody = await res.json().catch(()=>({}));
-    if(res.status === 404){
-      throw new Error(`"Not Found" — o token não tem acesso ao repositório privado "${GH_DATA_REPO}". Confirma em github.com/settings/tokens que este repositório está listado, com "Contents: Read and write".`);
-    }
     throw new Error(errBody.message || `HTTP ${res.status}`);
   }
 }
@@ -993,15 +947,6 @@ document.getElementById('search-input').addEventListener('input', (e)=>{
   }, 200);
 });
 
-document.getElementById('btn-refresh-registry').addEventListener('click', async ()=>{
-  const btn = document.getElementById('btn-refresh-registry');
-  btn.disabled = true;
-  btn.textContent = 'A atualizar...';
-  await loadRegistry();
-  btn.textContent = '↻ Atualizar';
-  btn.disabled = false;
-});
-
 document.getElementById('stats-toggle').addEventListener('click', ()=>{
   const panel = document.getElementById('stats-panel');
   panel.classList.toggle('open');
@@ -1138,9 +1083,8 @@ function uploadClinicLogo(idx){
     }
     const reader = new FileReader();
     reader.onload = ()=>{
-      const snapshot = JSON.parse(JSON.stringify(appConfig));
       appConfig.clinics[idx].logo = reader.result; // já vem como data:...;base64,...
-      saveConfigAndRender(snapshot);
+      saveConfigAndRender();
     };
     reader.readAsDataURL(file);
   });
@@ -1156,8 +1100,7 @@ const ENTITY_SCHEMA = {
       { key:'professionalTitle', label:'Como se chama o profissional', type:'text', placeholder:'Osteopata, Podologista, Fisioterapeuta...' },
       { key:'description', label:'Descrição (texto do vale)', type:'textarea' },
       { key:'duration', label:'Duração', type:'text', placeholder:'45 minutos' },
-      { key:'recommendedAge', label:'Recomendado para', type:'text', placeholder:'0–12 anos / Adultos' },
-      { key:'accentColor', label:'Cor de destaque deste serviço (botões, selo)', type:'color' }
+      { key:'recommendedAge', label:'Recomendado para', type:'text', placeholder:'0–12 anos / Adultos' }
     ]
   },
   clinics: {
@@ -1223,24 +1166,6 @@ function renderEntityField(field, existing){
 
   const value = existing ? (existing[field.key] || '') : '';
   const placeholder = field.placeholder ? ` placeholder="${escapeAttr(field.placeholder)}"` : '';
-
-  if(field.type === 'color'){
-    return `<div class="field-block">
-      <label for="ef-${field.key}">${escapeHtml(field.label)}</label>
-      <input type="color" id="ef-${field.key}" data-field="${field.key}" value="${escapeAttr(value || '#E2985F')}" style="height:42px; padding:.25rem;">
-    </div>`;
-  }
-
-  if(field.type === 'select'){
-    const options = field.options.map(opt =>
-      `<option value="${escapeAttr(opt.value)}"${opt.value === value ? ' selected' : ''}>${escapeHtml(opt.label)}</option>`
-    ).join('');
-    return `<div class="field-block">
-      <label for="ef-${field.key}">${escapeHtml(field.label)}</label>
-      <select id="ef-${field.key}" data-field="${field.key}">${options}</select>
-    </div>`;
-  }
-
   if(field.type === 'textarea'){
     return `<div class="field-block">
       <label for="ef-${field.key}">${escapeHtml(field.label)}</label>
@@ -1306,7 +1231,6 @@ function saveEntityModal(){
     return;
   }
 
-  const snapshot = JSON.parse(JSON.stringify(appConfig));
   if(idx != null){
     const existing = appConfig[entity][idx];
     data.id = existing.id;
@@ -1319,7 +1243,7 @@ function saveEntityModal(){
   }
 
   closeEntityModal();
-  saveConfigAndRender(snapshot);
+  saveConfigAndRender();
 }
 
 document.getElementById('entity-modal-cancel').addEventListener('click', closeEntityModal);
@@ -1332,9 +1256,8 @@ function addConfigItem(entity){
   if(entity === 'validityOptions'){
     const value = window.prompt('Novo texto de validade (ex: "3 meses após emissão"):', '');
     if(value === null || !value.trim()) return;
-    const snapshot = JSON.parse(JSON.stringify(appConfig));
     appConfig.validityOptions.push(value.trim());
-    saveConfigAndRender(snapshot);
+    saveConfigAndRender();
     return;
   }
   openEntityModal(entity, null);
@@ -1345,9 +1268,8 @@ function editConfigItem(entity, idx){
     const current = appConfig.validityOptions[idx];
     const value = window.prompt('Editar texto de validade:', current);
     if(value === null || !value.trim()) return;
-    const snapshot = JSON.parse(JSON.stringify(appConfig));
     appConfig.validityOptions[idx] = value.trim();
-    saveConfigAndRender(snapshot);
+    saveConfigAndRender();
     return;
   }
   openEntityModal(entity, idx);
@@ -1355,20 +1277,18 @@ function editConfigItem(entity, idx){
 
 
 function toggleConfigItem(entity, idx){
-  const snapshot = JSON.parse(JSON.stringify(appConfig));
   appConfig[entity][idx].active = appConfig[entity][idx].active === false ? true : false;
-  saveConfigAndRender(snapshot);
+  saveConfigAndRender();
 }
 
 function removeConfigItem(entity, idx){
   const label = entity === 'validityOptions' ? appConfig[entity][idx] : (appConfig[entity][idx].name || appConfig[entity][idx].label);
   if(!confirm(`Remover "${label}"? Esta ação não pode ser desfeita.`)) return;
-  const snapshot = JSON.parse(JSON.stringify(appConfig));
   appConfig[entity].splice(idx, 1);
-  saveConfigAndRender(snapshot);
+  saveConfigAndRender();
 }
 
-async function saveConfigAndRender(previousConfig){
+async function saveConfigAndRender(){
   renderConfigLists(); // otimista: mostra já a alteração
   if(typeof renderClinicContext === 'function' && document.getElementById('clinic-context')){
     renderClinicContext();
@@ -1376,14 +1296,12 @@ async function saveConfigAndRender(previousConfig){
   const token = getCfgToken();
   if(!token){
     alert('A alteração não foi gravada — cola o token do GitHub e tenta novamente.');
-    if(previousConfig){ appConfig = previousConfig; renderConfigLists(); if(typeof renderClinicContext === 'function') renderClinicContext(); }
     return;
   }
   try{
     const apiUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${CONFIG_PATH}`;
     let sha = null;
     const getRes = await fetch(`${apiUrl}?ref=${GH_BRANCH}`, {
-      cache: 'no-store',
       headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
     });
     if(getRes.status === 200){
@@ -1412,14 +1330,7 @@ async function saveConfigAndRender(previousConfig){
       throw new Error(errBody.message || `HTTP ${putRes.status}`);
     }
   } catch(err){
-    alert('Não foi possível gravar a configuração — a alteração foi desfeita. Tenta novamente. (' + err.message + ')');
-    if(previousConfig){
-      appConfig = previousConfig;
-      renderConfigLists();
-      if(typeof renderClinicContext === 'function' && document.getElementById('clinic-context')){
-        renderClinicContext();
-      }
-    }
+    alert('Não foi possível gravar a configuração: ' + err.message);
   }
 }
 

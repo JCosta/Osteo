@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestão de Vouchers</title>
+<title>Gestão de Vouchers e Marcações</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -188,6 +188,7 @@
     font-size:.85rem; cursor:pointer; color:var(--sage-dk); font-family:'Fraunces',serif;
   }
   .view-tab.active{ background:var(--sage); color:var(--cream); border-color:var(--sage); }
+  a.view-tab{ text-decoration:none; display:inline-block; }
 
   .config-token-row{ display:flex; gap:.6rem; align-items:center; margin:1.5rem 0; }
   .config-token-row input{
@@ -238,13 +239,14 @@
 
 <header>
   <a class="nav-link" href="generator.html">+ Criar novo voucher</a>
-  <h1>Gestão de Vouchers</h1>
+  <h1>Gestão de Vouchers e Marcações</h1>
   <p>Visão geral de tudo o que foi emitido, utilizado e está pendente.</p>
 </header>
 
 <div class="view-tabs">
   <button class="view-tab active" id="tab-vales">Vales</button>
   <button class="view-tab" id="tab-config">Configurações</button>
+  <a class="view-tab" href="/Osteo/AppointmentManagement/appointments.html">Marcações</a>
 </div>
 
 <div class="wrap" id="vales-view">
